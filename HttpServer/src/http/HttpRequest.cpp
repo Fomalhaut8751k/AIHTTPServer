@@ -25,18 +25,18 @@ void HttpRequest::setReceiveTime(TimeStamp t)
 
 bool HttpRequest::setMethod(const char* start, const char* end)
 {
-    assert(method_ == Method::kInvalid);
+    assert(method_ == kInvalid);
     std::string m(start, end);
 
-    if(m == "GET") { method_ = Method::kGet; }
-    else if(m == "POST") { method_ = Method::kPost; }
-    else if(m == "HEAD") { method_ = Method::kHead; }
-    else if(m == "PUT") { method_ = Method::kPut; }
-    else if(m == "DELETE") { method_ = Method::kDelete; }
-    else if(m == "OPTIONS") { method_ = Method::kOptions; }
-    else { method_ = Method::kInvalid; }
+    if(m == "GET") { method_ = kGet; }
+    else if(m == "POST") { method_ = kPost; }
+    else if(m == "HEAD") { method_ = kHead; }
+    else if(m == "PUT") { method_ = kPut; }
+    else if(m == "DELETE") { method_ = kDelete; }
+    else if(m == "OPTIONS") { method_ = kOptions; }
+    else { method_ = kInvalid; }
 
-    return method_ != Method::kInvalid;  // 判断是否修改成功
+    return method_ != kInvalid;  // 判断是否修改成功
 }
 
 
