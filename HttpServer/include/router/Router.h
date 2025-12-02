@@ -34,7 +34,7 @@ public:
     Router() = default;
     ~Router() = default;
 
-    // 路由键（请求方法 + URI） POST /api/users
+    // 路由键（请求方法 + URI） POST /api/users ?
     struct RouteKey
     {
         HttpRequest::Method method;
@@ -73,15 +73,26 @@ private:
 
     struct RouteCallbackObj
     {
+        HttpRequest::Method method_;
+        std::regex pathRegex_;
+        HandlerCallback callback_;
 
+        RouteCallbackObj(HttpRequest::Method method, std::regex pathRegex,
+                        const HandlerCallback &callback);
     };
 
     struct RouteHandlerObj
     {
+        HttpRequest::Method method_;
+        std::regex pathRegex_;
+        HandlerPtr handler_;
 
+        RouteHandlerObj(HttpRequest::Method method, std::regex pathRegex,
+                            HandlerPtr handler);
     };
 
-    std::unordered_map<RouteKey, HandlerPtr, RouteKeyHash> handler_;  // 精准匹配
+    /* 带regex的就是动态？ */
+    std::unordered_map<RouteKey, HandlerPtr, RouteKeyHash> handlers_;  // 精准匹配
     std::unordered_map<RouteKey, HandlerCallback, RouteKeyHash> callbacks_;  // 精准匹配
     std::vector<RouteHandlerObj> regexHandlers_;  // 正则匹配
     std::vector<RouteCallbackObj> regexCallbacks_;  // 正则匹配
