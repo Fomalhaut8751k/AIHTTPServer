@@ -30,6 +30,24 @@ std::shared_ptr<Session> MemorySessionStorage::load(const std::string& sessionId
     return nullptr;
 }
 
+// 清除过期的会话
+void MemorySessionStorage::removeExpired()
+{
+    auto it = sessions_.begin();
+    for(;it != sessions_.end();)
+    {
+        if(it->second->isExpired())
+        {
+            it = sessions_.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+        
+    }
+}
+
 // 通过会话Id从存储中移除会话
 void MemorySessionStorage::remove(const std::string& sessionId)
 {

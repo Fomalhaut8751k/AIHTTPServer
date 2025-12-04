@@ -11,4 +11,14 @@
 
 由于HTTP没有提供任何记住客户端的途径，那么服务器如何建立维护与客户端的会话？
 
-当服务端接收到客户端的首次请求时，服务器初始化一个会话并分配给给会话一个`唯一的标识符`(sessionId)。在以后得请求中，客户端必须将唯一的标识符包含在请求中，服务器根据次表示符将请求与对应的会话联系起来。
+当服务端接收到客户端的首次请求时，服务器初始化一个会话并分配给给会话一个`唯一的标识符`(sessionId)。在以后得请求中，客户端必须将唯一的标识符包含在请求中（请求头），服务器根据次表示符将请求与对应的会话联系起来。
+```css
+Host: example.com                                         # 必须
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)     # 客户端信息
+Accept: text/html, application/json                       # 可接受的响应类型
+Content-Type: application/json                            # 请求字体的MIME类型
+Authorization: Bearer abc123xyz                           # 认证信息
+Cookie: sessionId=abc123; username=john                   # **Cookie**
+Content-Length: 56                                        
+Connection: keep-alive                                    # 连接管理
+```

@@ -39,7 +39,7 @@ public:
     std::string getVersion() const { return version_; }
 
     void addHeader(const char* start, const char* colon, const char* end);
-    std::string getHeadler(const std::string& field) const;
+    std::string getHeader(const std::string& field) const;
 
     const std::map<std::string, std::string>& headers() const { return headers_; }
 

@@ -120,7 +120,7 @@ void HttpRequest::addHeader(const char* start, const char* colon, const char* en
     headers_[key] = value;
 }
 
-std::string HttpRequest::getHeadler(const std::string& field) const
+std::string HttpRequest::getHeader(const std::string& field) const
 {   // field: “Host”, "User-Agent", .....
     auto it = headers_.find(field);
     if(it != headers_.end())

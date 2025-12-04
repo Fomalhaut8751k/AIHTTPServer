@@ -77,7 +77,7 @@ User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)     # 客户端信息
 Accept: text/html, application/json                       # 可接受的响应类型
 Content-Type: application/json                            # 请求字体的MIME类型
 Authorization: Bearer abc123xyz                           # 认证信息
-Content-Length: 56                                        # Cookie
+Content-Length: 56                                        
 Connection: keep-alive                                    # 连接管理
 ```
 

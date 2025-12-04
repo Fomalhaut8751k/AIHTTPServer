@@ -17,6 +17,7 @@ public:
     virtual void save(std::shared_ptr<Session> session) = 0;
     virtual std::shared_ptr<Session> load(const std::string& sessionId) = 0;
     virtual void remove(const std::string& sessionId) = 0; 
+    virtual void removeExpired() = 0;
 };
 
 class MemorySessionStorage: public SessionStorage
@@ -26,6 +27,8 @@ public:
     virtual void save(std::shared_ptr<Session> session) override;  // 创建会话副本并存储
     virtual std::shared_ptr<Session> load(const std::string& sessionId) override;
     virtual void remove(const std::string& sessionId) override;  // 通过会话Id从存储中移除会话
+
+    virtual void removeExpired() override;  // 清除过期的会话
 private:
     std::unordered_map<std::string, std::shared_ptr<Session>> sessions_;
 };

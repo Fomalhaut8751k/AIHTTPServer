@@ -22,34 +22,64 @@ SessionManager::SessionManager(std::unique_ptr<SessionStorage> storage):
 // 从请求中获取或创建会话
 std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, HttpResponse* resp)
 {
-    assert(storage_ != nullptr);
-    auto it = storage_->load(); 
-    if(it)
+    // 从req中获取sessionId，但是创建会话前没有这个Id
+    std::string sessionId = getSessionIdFromCookie(req);
+    std::shared_ptr<Session> session;
+
+    /*
+        sessionId为空————没有会话————(创建会话)
+        sessionId不为空————有会话————先加载会话
+            会话过期了————移除过期会话并创建新的会话
+            会话没过期————直接用这个会话，并且刷新一下时间
+    */
+   
+    if(sessionId.empty())
     {
-        return it;
+        sessionId = generateSessionId();  // 创建一个新的Id
+        session = std::make_shared<Session>(sessionId, this);
+        storage_->save(session);
     }
     else
     {
-        storage_->save();
+        session = storage_->load(sessionId);
+        if(session->isExpired())  // 如果过期了
+        {
+            storage_->remove(sessionId);
+            sessionId = generateSessionId();  // 创建一个新的Id
+            session = std::make_shared<Session>(sessionId, this);
+            storage_->save(session);
+        }    
+        else  // 没有过期
+        {
+            session->setManager(this);  // 为现有会话设置管理器
+            session->refresh();
+        }
     }
+    return session;
+    
 }
 
 // 销毁会话
 void SessionManager::destorySession(const std::string& sessionId)
 {
-
+    storage_->remove(sessionId);
 }
 
 // 清理过期会话
 void SessionManager::cleanExpiredSession()
 {
-
+    /*
+        注意：这个实现依赖于具体的存储实现
+        对于内存存储，可以在加载时检查是否过期
+        对于其他存储的实现，可能需要定期清理过期会话
+    */
+   storage_->removeExpired();
 }
 
 // 更新会话
 void SessionManager::updateSession(std::shared_ptr<Session> session)
 {
-
+    storage_->save(session);
 }
 
 // 生产唯一的会话标识符，确保会话的唯一性和安全性
@@ -66,13 +96,40 @@ std::string SessionManager::generateSessionId()
     return ss.str();
 }
 
+// 从HTTP请求的Cookie头部中提取会话ID
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)
 {
-
+    /*  存放在请求头中：
+        Cookie: sessionId=abc123def456; username=john; theme=dark 
+    */
+    std::string sessionId;
+    std::string cookie = req.getHeader("Cookie");
+    if(!cookie.empty())
+    {
+        size_t pos = cookie.find("sessionId=");
+        if(pos != std::string::npos)
+        {
+            pos += 10;  // 跳过sessionId=这10个字符
+            size_t end = cookie.find(";", pos);  // 从pos开始找
+            if(end != std::string::npos)
+            {
+                sessionId = cookie.substr(pos, end-pos);
+            }
+            else
+            {
+                sessionId = cookie.substr(pos);
+            }
+        }
+    }
+    return sessionId;
 }
 
 void SessionManager::setSessionCookie(const std::string& sessionId, HttpResponse* resp)
 {
+    // 把会话Id设置到响应头中，作为Cookie
+    std::string cookie = "sessionId=" + sessionId + "; Path=/; HttpOnly";
+    resp->addHeader("Set-Cookie", cookie);
+}
 
 }
 
