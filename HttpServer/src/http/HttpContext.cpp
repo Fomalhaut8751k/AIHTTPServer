@@ -74,7 +74,7 @@ bool HttpContext::parseRequest(Buffer* buf, TimeStamp receiveTime)
                     if(request_.method() == HttpRequest::kPost || 
                         request_.method() == HttpRequest::kPut)  // 只有这两种方法需要body
                     {
-                        std::string contentLength = request_.getHeadler("Content-Length");
+                        std::string contentLength = request_.getHeader("Content-Length");
                         if(!contentLength.empty())
                         {
                             request_.setContentLength(std::stoi(contentLength));

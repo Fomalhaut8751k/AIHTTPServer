@@ -26,7 +26,7 @@ private:
 
     SSL_CTX* ctx_;  // SSL上下文
     SslConfig config_;  // SSL配置
-}
+};
 
 }
 

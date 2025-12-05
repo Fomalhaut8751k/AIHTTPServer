@@ -17,7 +17,7 @@ enum class SSLVersion
 enum class SSLError
 {
     NONE,
-    WHAT_READ,
+    WANT_READ,
     WANT_WRITE,
     SYSCALL,
     SSL,
