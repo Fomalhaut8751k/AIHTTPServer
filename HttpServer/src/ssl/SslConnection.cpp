@@ -81,6 +81,13 @@ void SslConnection::send(const void* data, size_t len)
         return;
     }
 
+    /*
+        先把明文数据data, 交给 OpenSSL 的 SSL/TLS 引擎, SSL 引擎进行加密, 
+        并将加密后的数据写入内部的 BIO 缓冲区。
+
+        从 BIO 读取加密数据，读到缓冲区buf中，再通过TcpConnection进行发送
+    */
+
     int written = SSL_write(ssl_, data, len);
     if(written <= 0)
     {
@@ -103,6 +110,10 @@ void SslConnection::send(const void* data, size_t len)
 
 void SslConnection::onRead(const TcpConnectionPtr& conn, BufferPtr buf, TimeStamp time)
 {
+    /*
+        将接收到的网络数据（加密的握手消息）写入 readBio_
+        调用 handleHandshake() 处理 SSL/TLS 握手过程
+    */
     if(state_ == SSLState::HANDSHAKE)
     {
         BIO_write(readBio_, buf->peek(), buf->readableBytes());
@@ -110,6 +121,10 @@ void SslConnection::onRead(const TcpConnectionPtr& conn, BufferPtr buf, TimeStam
         handleHandshake();
         return;
     }
+    /*
+        传给TcpServer的MessageCallback的回调函数中应该
+        包含将readBio_
+    */
     else if(state_ == SSLState::ESTABLISHED)
     {
         // 解密数据
@@ -176,6 +191,9 @@ long SslConnection::bioCtrl(BIO* bio, int cmd, long num, void* ptr)
 
 void SslConnection::handleHandshake()
 {
+    /*
+        就直接调用内置的函数
+    */
     int ret = SSL_do_handshake(ssl_);
 
     if(ret == 1)

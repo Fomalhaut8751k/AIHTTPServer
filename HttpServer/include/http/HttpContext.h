@@ -41,7 +41,7 @@ public:
     HttpContext();
 
     bool parseRequest(Buffer* buf, TimeStamp receiveTime);
-    bool gotALl() const { return state_ == kGotAll; }
+    bool gotAll() const { return state_ == kGotAll; }
 
     void reset();
 

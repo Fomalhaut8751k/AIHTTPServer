@@ -19,6 +19,7 @@ using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&
 class SslConnection: noncopyable
 {
 public:
+    // 在Muduo中TcpConnection专门负责io操作
     using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
     using BufferPtr = Buffer*;
 
