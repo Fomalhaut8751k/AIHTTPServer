@@ -20,7 +20,7 @@ static BIO_METHOD* createCustomBioMethod()
 SslConnection::SslConnection(const TcpConnectionPtr& conn, SslContext* ctx):
     ssl_(nullptr),
     conn_(conn),
-    ctx_(ctx),
+    ctx_(ctx),  // 创建好的ssl上下文
     state_(SSLState::HANDSHAKE),
     readBio_(nullptr),
     writeBio_(nullptr),
@@ -28,6 +28,10 @@ SslConnection::SslConnection(const TcpConnectionPtr& conn, SslContext* ctx):
 {
     // 创建 SSL 对象
     ssl_ = SSL_new(ctx_->getNativeHandle());
+    /*
+        这里的ctx_时SslContext类，这个类中包含了一个SSL_CTX* ctx_的成员变量
+        调用ctx_->getNativeHandle()就是返回SslContext对象中SSL_CTX*类型的成员变量
+    */
     if(!ssl_)
     {
         logger_->ERROR(std::string("Failed to create SSL object: ") + ERR_error_string(ERR_get_error(), nullptr));
@@ -98,11 +102,13 @@ void SslConnection::send(const void* data, size_t len)
 
     char buf[4096];
     int pending;
+    // bio缓冲区还有数据
     while((pending = BIO_pending(writeBio_)) > 0)
     {
+        // 从bio中读取数据到buf当中
         int bytes = BIO_read(writeBio_, buf, std::min(pending, static_cast<int>(sizeof(buf))));
         if(bytes > 0)
-        {
+        {   // 将buf中的数据通过TcpConnection发送出去
             conn_->send(buf);
         }
     }
@@ -116,6 +122,7 @@ void SslConnection::onRead(const TcpConnectionPtr& conn, BufferPtr buf, TimeStam
     */
     if(state_ == SSLState::HANDSHAKE)
     {
+        // 把buf中的数据写入到bio中
         BIO_write(readBio_, buf->peek(), buf->readableBytes());
         buf->retrieve(buf->readableBytes());
         handleHandshake();
