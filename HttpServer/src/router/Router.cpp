@@ -17,14 +17,14 @@ size_t Router::RouteKeyHash::operator()(const RouteKey& key) const
 void Router::registerHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler)
 {
     RouteKey key{method, path};  // 方法和URL
-    handlers_[key] = handler;   // URL到函数的映射————路由
+    handlers_[key] = std::move(handler);   // URL到函数的映射————路由
 }
 
 // 注册回调函数形式的处理器
 void Router::registerCallback(HttpRequest::Method method, const std::string &path, const HandlerCallback& callback)
 {
     RouteKey key{method, path};
-    callbacks_[key] = callback;  // 同上
+    callbacks_[key] = std::move(callback);  // 同上
 }
 
 // 注册动态路由处理器
@@ -44,6 +44,10 @@ void Router::addRegexCallback(HttpRequest::Method method, const std::string &pat
 // 处理请求
 bool Router::route(const HttpRequest &req, HttpResponse* resp)
 {
+    /*  GET /api/search?q=keyword&page=1 HTTP/1.1 【这是请求行】
+        Method: GET
+        Path: /api/search
+    */
     RouteKey key{req.method(), req.path()};
 
     // 查找处理器

@@ -34,3 +34,14 @@
     ![](imgs/certificate.png)
 
 
+## HttpServer
+
+### 1. 处理读事件
+    
+![](imgs/onMessage1.png)
+
+![](imgs/onMessage2.png)
+
+### 2. 处理连接到来事件
+
+

@@ -63,10 +63,13 @@ bool DbConnection::ping()  // 添加检测连接是否有效的方法
     {
         // 不使用 getStmt, 直接创建新的语句
         std::unique_ptr<sql::Statement> stmt(conn_->createStatement());
+        std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery("SELECT 1"));
+        return true;
     }
-    catch(const std::exception& e)
+    catch(const sql::SQLException& e)
     {
-        std::cerr << e.what() << '\n';
+        logger_->ERROR(std::string("Ping failed: ") + e.what());
+        return false;
     }
     
 }
@@ -84,7 +87,6 @@ bool DbConnection::isValid()
     {
         return false;
     }
-    
 }
 
 void DbConnection::reconnect()

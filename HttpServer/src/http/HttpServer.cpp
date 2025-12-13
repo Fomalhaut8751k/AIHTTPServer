@@ -35,7 +35,15 @@ void HttpServer::start()
 
 void HttpServer::initialize()
 {
-    // 设置回调函数
+    /*
+        设置回调函数，用户自己定义的回调函数
+
+        onConnection: 当有用户连接或者断开的时候调用的函数
+
+        onMessage： 当TcpConnection接收到客户端的消息时调用的函数
+
+
+    */
     server_.setConnectionCallback(std::bind(&HttpServer::onConnection, this, std::placeholders::_1));
     server_.setMessageCallback(std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
@@ -55,7 +63,7 @@ void HttpServer::setSslConfig(const ssl::SslConfig& config)
 
 void HttpServer::onConnection(const TcpConnectionPtr& conn)
 {
-    if(conn->connected())
+    if(conn->connected())  // 新用户连接
     {
         if(useSSL_)
         {
@@ -66,7 +74,7 @@ void HttpServer::onConnection(const TcpConnectionPtr& conn)
         }
         conn->setContext(HttpContext());
     }
-    else
+    else  // 老用户断开连接
     {
         if(useSSL_)
         {

@@ -8,7 +8,7 @@ namespace session
 {
 
 Session::Session(const std::string& sessionId, 
-            SessionManager* sessionManger, int maxAge=3600):
+            SessionManager* sessionManger, int maxAge):
     sessionId_(sessionId),
     sessionManager_(sessionManger),
     maxAge_(maxAge_)

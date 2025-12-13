@@ -127,6 +127,9 @@ void SslConnection::onRead(const TcpConnectionPtr& conn, BufferPtr buf, TimeStam
         buf->retrieve(buf->readableBytes());
         handleHandshake();
         return;
+        /*
+            如果还在(还未)Handshake(), 那么就先把数据写到bio但是先不处理？
+        */
     }
     /*
         传给TcpServer的MessageCallback的回调函数中应该
@@ -201,10 +204,15 @@ void SslConnection::handleHandshake()
     /*
         就直接调用内置的函数
     */
-    int ret = SSL_do_handshake(ssl_);
+    int ret = SSL_do_handshake(ssl_); 
+    /*
+        这个函数就包括了：
+        服务端发送自己的证书(公钥)，客户端创建会话秘钥，通过
+        公钥进行加密并发送给服务端，服务端通过私钥进行解密的过程。
+    */
 
-    if(ret == 1)
-    {
+    if(ret == 1)  // 握手成功
+    {   // 从SSLState::HANDSHAKE 变成 SSLState::ESTABLISHED 
         state_ = SSLState::ESTABLISHED;
         logger_->INFO("SSL handshake completed successfully");
         logger_->INFO(std::string("Using cipher: ") + SSL_get_cipher(ssl_));

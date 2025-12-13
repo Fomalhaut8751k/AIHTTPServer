@@ -91,6 +91,9 @@ private:
     std::unique_ptr<ssl::SslContext> sslCtx_;  // SSL上下文
     bool useSSL_;  // 是否使用SSL
     std::map<TcpConnectionPtr, std::unique_ptr<ssl::SslConnection>> sslConns_;
+    /*
+        SslConnection里面就有TcpConnectionPtr conn_;     
+    */
 };
 
 

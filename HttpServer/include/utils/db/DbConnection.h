@@ -42,12 +42,12 @@ public:
         {
             // 直接创建新的预处理语句，不使用缓存
             std::unique_ptr<sql::PreparedStatement> stmt(conn_->prepareStatement(sql));
-            bindParams(stmts.get(), 1, std::forward<Args>(args)...);
+            bindParams(stmt.get(), 1, std::forward<Args>(args)...);
             return stmt->executeQuery();
         }
-        catch(const std::SQLException& e)
+        catch(const sql::SQLException& e)
         {
-            logger_->ERROR("Query failed: " + e.what() + ", SQL: " + sql);
+            logger_->ERROR(std::string("Query failed: ") + e.what() + ", SQL: " + sql);
             throw DbException(e.what());
         }  
     }
@@ -55,17 +55,17 @@ public:
     template<typename... Args>  
     int executeUpdate(const std::string& sql, Args&&... args)
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex_);
         try
         {
             // 直接创建新的预处理语句，不使用缓存
             std::unique_ptr<sql::PreparedStatement> stmt(conn_->prepareStatement(sql));
-            bindParams(stmts.get(), 1, std::forward<Args>(args)...);
+            bindParams(stmt.get(), 1, std::forward<Args>(args)...);
             return stmt->executeUpdate();
         }
-        catch(const std::exception& e)
+        catch(const sql::SQLException& e)
         {
-            logger_->ERROR("Update failed: " + e.what() + ", SQL: " + sql);
+            logger_->ERROR(std::string("Update failed: ") + e.what() + ", SQL: " + sql);
             throw DbException(e.what());
         }
         

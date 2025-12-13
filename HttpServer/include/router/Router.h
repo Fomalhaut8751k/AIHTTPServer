@@ -40,7 +40,7 @@ public:
         HttpRequest::Method method;
         std::string path;
 
-        bool operator==(const RouteKey &other) { return method == other.method && path == other.path; }
+        bool operator==(const RouteKey &other) const { return method == other.method && path == other.path; }
     };
 
     // 为RouteKeyHash

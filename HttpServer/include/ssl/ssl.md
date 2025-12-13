@@ -106,3 +106,26 @@ SSL_read(ssl_, decryptedData, sizeof(decryptedData));  // 将readBio_中的加�
     ```
 
 
+### 6. `SSLConnections`和`TcpConnection`
+
+在`muduo`网络库的`TcpServer`中，`TcpConnection`保存在了：
+```cpp
+// using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
+std::unordered_map<std::string, TcpConnectionPtr> connections_;   // 保存所有连接
+```
+这里的键(`std::string`)是连接`Connection`的名字
+
+在本项目的`HttpServer`中，`SSlConnection`保存在了:
+```cpp
+std::map<TcpConnectionPtr, std::unique_ptr<ssl::SslConnection>> sslConns_;
+```
+可以认为就是和`muduo`网络库`TcpServer`中的表一一对应。
+
+在`SSLConnection`中封装了这么一个成员变量。在`SSLConnection`的构造函数中，需要传入一个创建好的`TcpConnection`用于初始化，给到这个成员变量。需要用这个`conn_`进行数据发送等操作。
+```cpp
+TcpConnectionPtr conn_;        // TCP连接
+...
+conn_->send(buf);              // 使用conn_向对端发送数据
+conn_->shutdown();             // 关闭TcpConnection
+```
+同时，`SSLConnection`会为它的`conn_`提供相应的消息回调函数，即当`TcpConnection`监听到对端有消息发来时将会触发的回调函数。

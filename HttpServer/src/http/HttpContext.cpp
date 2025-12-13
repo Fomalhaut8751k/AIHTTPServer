@@ -173,7 +173,7 @@ bool HttpContext::processRequestLine(const char* begin, const char* end)
 
             start = space + 1;  // 来到HTTP/1.1的‘H’处
             // 满足以下条件就说明请求行没有问题
-            succeed = ((end - start == 8) && std::equal(start, end-1, '"HTTP/1.'));
+            succeed = ((end - start == 8) && std::equal(start, end-1, "HTTP/1."));
             if(succeed)
             {   // HTTP的两种版本，定义了客户端和服务器之间如何交换数据
                 if(*(end-1) == '1')
