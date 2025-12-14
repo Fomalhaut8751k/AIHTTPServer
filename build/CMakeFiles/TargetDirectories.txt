@@ -1,3 +1,0 @@
-/home/wjl/桌面/projects/AIHTTPServer/AIHTTPServer/build/CMakeFiles/simple_server.dir
-/home/wjl/桌面/projects/AIHTTPServer/AIHTTPServer/build/CMakeFiles/edit_cache.dir
-/home/wjl/桌面/projects/AIHTTPServer/AIHTTPServer/build/CMakeFiles/rebuild_cache.dir

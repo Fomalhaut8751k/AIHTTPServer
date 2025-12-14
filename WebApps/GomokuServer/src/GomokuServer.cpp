@@ -1,8 +1,24 @@
 #include "../include/GomokuServer.h"
 
+#include "../../../HttpServer/include/http/HttpRequest.h"
+#include "../../../HttpServer/include/http/HttpResponse.h"
+#include "../../../HttpServer/include/http/HttpServer.h"
+
+#include "../include/handlers/EntryHandler.h"
+#include "../include/handlers/LoginHandler.h"
+#include "../include/handlers/RegisterHandler.h"
+#include "../include/handlers/MenuHandler.h"
+#include "../include/handlers/AiGameStartHandler.h"
+#include "../include/handlers/LogoutHandler.h"
+#include "../include/handlers/AiGameMoveHandler.h"
+#include "../include/handlers/GameBackendHandler.h"
+
+
+using namespace http;
+
 GomokuServer::GomokuServer(int port, const std::string& name,
-                 TcpServer::Option option = TcpServer::kNoReusePort):
-    httpServer_(port, name, true, option),
+                 TcpServer::Option option):
+    httpServer_(port, name, option),
     maxOnline_(0)
 {
     initialize();
@@ -127,7 +143,7 @@ void GomokuServer::restartChessGameVsAi(const http::HttpRequest& req, http::Http
     successResp["message"] = "restart successful";
     successResp["userId"] = userId;
     std::string successBody = successResp.dump(4);
-    packageResp(req.getVersion(), http::HttpResponse::k2000k, "OK", false, "application/json", successBody.size(), successBody, resp);
+    packageResp(req.getVersion(), http::HttpResponse::k200Ok, "OK", false, "application/json", successBody.size(), successBody, resp);
 }
 
 void GomokuServer::getBackendData(const http::HttpRequest& req, http::HttpResponse* resp)
@@ -150,7 +166,7 @@ void GomokuServer::getBackendData(const http::HttpRequest& req, http::HttpRespon
             {"curOnline", curOnline},
             {"maxOnline", maxOnline},
             {"totalUser", totalUser}
-        }
+        };
 
         // 转化为字符串
         std::string responseStr = respBody.dump(4);
@@ -167,7 +183,7 @@ void GomokuServer::getBackendData(const http::HttpRequest& req, http::HttpRespon
     }
     catch(const std::exception& e)
     {
-        logger_->ERROR(std::string("Error in getBackendData: "), e.what());
+        logger_->ERROR(std::string("Error in getBackendData: ") + e.what());
 
         // 错误响应
         nlohmann::json errorBody = {
@@ -178,7 +194,7 @@ void GomokuServer::getBackendData(const http::HttpRequest& req, http::HttpRespon
         std::string errorStr = errorBody.dump();
         resp->setStatusCode(http::HttpResponse::k500InternalServerError);
         resp->setStatusMessage("Internal Server Error");
-        resp->setConntentType("application/json");
+        resp->setContentType("application/json");
         resp->setBody(errorStr);
         resp->setContentLength(errorStr.size());
         resp->setCloseConnection(true);
@@ -227,7 +243,6 @@ int GomokuServer::getMaxOnline() const
 // 获取当前在线人数
 int GomokuServer::getCurOnline() const
 {
-    std::unique_lock<std::mutex> lock(mutexForOnlineUsers_);
     return onlineUsers_.size();
 }
 
