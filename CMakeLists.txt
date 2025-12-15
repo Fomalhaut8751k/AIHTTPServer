@@ -86,3 +86,5 @@ endforeach()
 message(STATUS "Main source file: ${MAIN_SRC}")
 message(STATUS "HTTP Server sources: ${HTTP_SERVER_SRC}")
 message(STATUS "Gomoku Server sources: ${GOMOKU_SERVER_SRC}")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")

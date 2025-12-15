@@ -35,7 +35,7 @@ void HttpResponse::appendToBuffer(Buffer* outputBuf) const
     // HttpResponse封装的信息格式化输出
     char buf[32];
     // 状态信息有长有短，不方便定义一个固定大小的内存存储
-    snprintf(buf, sizeof buf, "%s %d", httpVersion_.c_str(), statusCode_);
+    snprintf(buf, sizeof buf, "%s %d ", httpVersion_.c_str(), statusCode_);
 
     outputBuf->append(buf);
     outputBuf->append(statusMessage_);

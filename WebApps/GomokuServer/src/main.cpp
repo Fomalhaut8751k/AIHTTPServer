@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     logger_->INFO("pid = " + getpid());
 
     std::string serverName = "HttpServer";
-    int port = 80;
+    int port = 8081;
 
     // 参数解析
     int opt;
@@ -29,6 +29,8 @@ int main(int argc, char* argv[])
                 break;
         }
     }
+
+    std::cout << "port: " << port << std::endl;
     
     GomokuServer server(port, serverName);
     server.setThreadNum(4);

@@ -120,7 +120,7 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, TimeStamp 
         }
         // HttpContext对象用于解析处buf中的请求报文，并把报文的关键信息封装到HttpRequest对象中
         HttpContext* context = boost::any_cast<HttpContext>(conn->getMutableContext());
-        if(!context->parseRequest(buf, receiveTime));  // 解析一个http请求
+        if(!context->parseRequest(buf, receiveTime))  // 解析一个http请求
         {
             // 如果解析HTTP报文中出错
             conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");

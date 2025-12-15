@@ -14,11 +14,27 @@ void DbConnectionPool::init(const std::string& host,
                             const std::string& database,
                             size_t poolSize)
 {
+    // 连接池会被多个线程访问，所以操作其成员变量时需要加锁
+    std::lock_guard<std::mutex> lock(mutex_);
+    // 确保只初始化一次
+    if(initialized_)
+    {
+        return;
+    }
+
     host_ = host;
     user_ = user;
     password_ = password;
     database_ = database;
-    initialized_ = false;
+
+    // 创建连接
+    for(size_t i = 0; i < poolSize; ++i)
+    {
+        connections_.push(createConnection());
+    }
+    
+    initialized_ = true;
+    logger_->INFO("Database connection pool initialized with " + std::to_string(poolSize) + " connections");
 }
 
 // 构造函数
