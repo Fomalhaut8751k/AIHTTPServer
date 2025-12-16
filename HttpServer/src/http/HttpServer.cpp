@@ -28,7 +28,7 @@ HttpServer::HttpServer(int port, const std::string& name, bool useSSL, TcpServer
 // 服务器运行函数
 void HttpServer::start()
 {
-    logger_->WARN("HttpServer[" + server_.name() + "] starts listening on" + server_.isPort());
+    logger_->WARN("HttpServer[" + server_.name() + "] starts listening on" + server_.ipPort());
     server_.start();
     mainLoop_.loop();
 }

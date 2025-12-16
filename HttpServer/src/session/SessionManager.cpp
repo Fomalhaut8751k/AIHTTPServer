@@ -37,16 +37,19 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
     {
         sessionId = generateSessionId();  // 创建一个新的Id
         session = std::make_shared<Session>(sessionId, this);
+        setSessionCookie(sessionId, resp);
         storage_->save(session);
     }
     else
     {
         session = storage_->load(sessionId);
-        if(session->isExpired())  // 如果过期了
+        // if(session->isExpired())  // 如果过期了
+        if(!session)
         {
             storage_->remove(sessionId);
             sessionId = generateSessionId();  // 创建一个新的Id
             session = std::make_shared<Session>(sessionId, this);
+            setSessionCookie(sessionId, resp);
             storage_->save(session);
         }    
         else  // 没有过期

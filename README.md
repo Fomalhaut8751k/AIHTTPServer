@@ -95,3 +95,38 @@
     正常注册登录后，显示如下的结果：
 
     ![](images/error12.png)
+
+10. 2025.12.16
+
+    书接上回
+
+    通过gdb调试后发现，客户端显示这个内容是因为在`MenuHandler::handle()`中，服务端并未能找到相应的会话，而这个原因是在`SessionManager::getSession()`中没有将Cookie字段添加到HTTP响应报文中，导致服务端没有把对于的会话ID发送给客户端，客户端下一次发送HTTP请求报文时，其中没有包含相应的Cookie，服务端查不到对于的SessionId，就又创建一个新的会话。
+
+    ![](images/error13.png)
+
+    修复方法，在创建新的会话时调用`setSessionCookie(sessionId, resp);`，这样就能正常的进入菜单了。
+
+    ![](images/error14.png)
+    ![](images/error15.png)
+
+
+- 问题四
+
+    第一次登陆成功后进入菜单，之后再次登陆就登陆失败。原因在与会话下载的判断，如果加载成功，就会返回相应的会话，如果失败，就会返回nullptr，但在加载之后又调用了`session->isExpired()`来判断。如果加载失败，就会出错，因此修改逻辑即可，把`session->isExpired()`改为`!session`
+    ```cpp
+    if(it != sessions_.end())
+    {
+        if(!it->second->isExpired())
+        {
+            return it->second;
+        }
+        else
+        {   // 如果会话过期，则从存储中移除
+            sessions_.erase(it);
+        }
+    }
+    return nullptr;
+    ```
+
+    
+    ![](images/error16.png)
