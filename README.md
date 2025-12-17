@@ -130,3 +130,54 @@
 
     
     ![](images/error16.png)
+
+11. 2025.12.17
+
+- 问题五，依然是问题三的显示情况。通过gdb调试后发现，客户端发送的两次请求报文(登录和登录成功后的界面)中，Cookie的SessionId居然是不一样的。
+
+    ![](images/error17.png)
+
+    进一步调试发现，在`LoginHandler()`中，`sessionId`不为空，但是用这个`sessionId`从`storage_`中查找对于会话时找不到，于是`load()`返回了`nullptr`，程序就会认为会话过期了，就重新创建一个新的会话。于是前两次会话的`sessionId`是不一样的。
+
+    ![](images/error18.png)
+
+    在`MenuHandler()`中，`seesionId`同样不为空，并且在`storage_`存放着对对应的键值对，但是在加载过程中显示该会话已经过期了，因此还是返回`nullptr`，按道理来说应该不可能过期的，代码上出现了笔误，在Session的构造函数上。
+
+    ```cpp
+    Session::Session(const std::string& sessionId, 
+            SessionManager* sessionManger, int maxAge):
+    sessionId_(sessionId),
+    sessionManager_(sessionManger),
+    maxAge_(maxAge)  // maxAge_(maxAge_) 这里出了问题
+    ```
+
+    修改后就可以正常进入菜单了。
+
+- 问题五
+
+    ai无限思考中......
+
+    ![](images/error19.png)
+
+    调试发现，落子对于的路由是`/aiBot/move`，但是却找不到对于的路由函数。
+
+    ![](images/error20.png)
+
+    ![](images/error21.png)
+
+    ```cpp
+    // 下棋
+    httpServer_.Get("/aiBot/move", std::make_shared<AiGameMoveHandler>(this));
+    ```
+    这里注册路由的时候请求方法是`Get`，但实际请求报文中的请求方法是`POST`，二者不匹配，故找不到对于的路由函数。
+
+    修改，将`.Get()`改成`.Post()`，就可以正常落子了
+
+- 问题六
+
+    AI只会沿着第一行落子，并且判定胜利条件有误
+
+    ![](images/error22.png)
+
+    均已修复，所有功能都正常了。
+

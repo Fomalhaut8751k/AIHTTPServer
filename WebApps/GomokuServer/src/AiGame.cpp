@@ -22,21 +22,23 @@ bool AiGame::isDraw() const
 
 bool AiGame::humanMove(int x, int y)
 {
-    if(isValidMove(x, y))
+    if(!isValidMove(x, y))
     {
-        std::unique_lock<std::mutex> lock(mutex_);
-        moveCount_++;
-        board_[x][y] = HUMAN_PLAYER;
-        lastMove_ = {x, y};
-        
-        if(checkWin(x, y, HUMAN_PLAYER))
-        {
-            gameOver_ = true;
-            winner_ = "human";
-        }
-        return true;
+        return false;
     }
-    return false;
+
+    board_[x][y] = HUMAN_PLAYER;
+    moveCount_++;
+    lastMove_ = {x, y};
+    
+    if(checkWin(x, y, HUMAN_PLAYER))
+    {
+        gameOver_ = true;
+        winner_ = "human";
+    }
+    return true;
+    
+    
 }
 
 // 检查胜利条件
@@ -89,11 +91,11 @@ void AiGame::aiMove()
     std::this_thread::sleep_for(std::chrono::milliseconds(500));  // 添加500ms延时
     int x, y;
     std::tie(x, y) = getBestMove();
-    moveCount_++;
     board_[x][y] = AI_PLAYER;
+    moveCount_++;
     lastMove_ = {x, y};
 
-    if(checkWin(x, y, HUMAN_PLAYER))
+    if(checkWin(x, y, AI_PLAYER))
     {
         gameOver_ = true;
         winner_ = "ai";
@@ -198,7 +200,7 @@ std::pair<int, int> AiGame::getBestMove()
         {
             for(int c = 0; c < BOARD_SIZE; c++)
             {
-                if(board_[r][c] != EMPTY && isNearOccupied(r, c))
+                if(board_[r][c] == EMPTY && isNearOccupied(r, c))
                 {   // 确保当前位置为空闲且靠近已有棋子
                     nearCells.push_back({r, c});
                 } 
@@ -213,17 +215,17 @@ std::pair<int, int> AiGame::getBestMove()
             board_[nearCells[num % nearCells.size()].first][nearCells[num % nearCells.size()].second] = AI_PLAYER;
             return nearCells[num % nearCells.size()]; 
         }
-    }
 
-    // 4. 如果所有策略都无效，选择第一个空位(保证AI落子)
-    for(int r = 0; r < BOARD_SIZE; r++)
-    {
-        for(int c = 0; c < BOARD_SIZE; c++)
+        // 4. 如果所有策略都无效，选择第一个空位(保证AI落子)
+        for(int r = 0; r < BOARD_SIZE; r++)
         {
-            if(board_[r][c] == EMPTY)
+            for(int c = 0; c < BOARD_SIZE; c++)
             {
-                board_[r][c] = AI_PLAYER;
-                return {r, c};  // 返回第一个空位
+                if(board_[r][c] == EMPTY)
+                {
+                    board_[r][c] = AI_PLAYER;
+                    return {r, c};  // 返回第一个空位
+                }
             }
         }
     }

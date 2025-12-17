@@ -75,7 +75,7 @@ void GomokuServer::initializeRouter()
     // 开始对战ai
     httpServer_.Get("/aiBot/start", std::make_shared<AiGameStartHandler>(this));
     // 下棋
-    httpServer_.Get("/aiBot/move", std::make_shared<AiGameMoveHandler>(this));
+    httpServer_.Post("/aiBot/move", std::make_shared<AiGameMoveHandler>(this));
     // 重新开始对战ai
     httpServer_.Get("/aiBot/restart", 
         [this](const http::HttpRequest& req, http::HttpResponse* resp){

@@ -55,9 +55,9 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
         else  // 没有过期
         {
             session->setManager(this);  // 为现有会话设置管理器
-            session->refresh();
         }
     }
+    session->refresh();
     return session;
     
 }

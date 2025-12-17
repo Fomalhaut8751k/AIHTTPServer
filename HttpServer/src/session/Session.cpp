@@ -11,13 +11,15 @@ Session::Session(const std::string& sessionId,
             SessionManager* sessionManger, int maxAge):
     sessionId_(sessionId),
     sessionManager_(sessionManger),
-    maxAge_(maxAge_)
+    maxAge_(maxAge)
 {
     refresh();
 }
 
 bool Session::isExpired() const
 {
+    std::chrono::duration<double> diff = std::chrono::system_clock::now() - expiryTime_;
+    double a = diff.count();
     return std::chrono::system_clock::now() > expiryTime_;
 }
 
