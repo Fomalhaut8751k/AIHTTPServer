@@ -13,7 +13,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/HttpServer/include
-    ${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/include
+    # ${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/include
+    ${PROJECT_SOURCE_DIR}/WebApps/ChatServer/include
     /usr/include/mysql-cppconn-8
     /usr/include/mysql
     ${OPENSSL_INCLUDE_DIR}
@@ -31,16 +32,18 @@ file(GLOB_RECURSE HTTP_SERVER_SRC
 )
 
 file(GLOB_RECURSE GOMOKU_SERVER_SRC
-    "${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/src/*.cpp"
+    # "${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/src/*.cpp"
+    "${PROJECT_SOURCE_DIR}/WebApps/ChatServer/src/*.cpp"
 )
 
 # 添加主程序文件
-set(MAIN_SRC "${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/src/main.cpp")
+# set(MAIN_SRC "${PROJECT_SOURCE_DIR}/WebApps/GomokuServer/src/main.cpp")
+set(MAIN_SRC "${PROJECT_SOURCE_DIR}/WebApps/ChatServer/src/main.cpp")
 
 # 如果主程序文件不存在，创建一个
 if(NOT EXISTS ${MAIN_SRC})
     file(WRITE ${MAIN_SRC}
-"#include \"../include/GomokuServer.h\"
+"#include \"../include/ChatServer.h\"
 #include <iostream>
 
 int main(int argc, char* argv[]) {
@@ -57,14 +60,16 @@ int main(int argc, char* argv[]) {
 endif()
 
 # 添加可执行文件
-add_executable(simple_server
+# add_executable(simple_server
+add_executable(chat_server
     ${MAIN_SRC}
     ${HTTP_SERVER_SRC}
     ${GOMOKU_SERVER_SRC}
 )
 
 # 链接必要的库
-target_link_libraries(simple_server
+# target_link_libraries(simple_server
+target_link_libraries(chat_server
     pthread
     # muduo_net
     # muduo_base
@@ -85,6 +90,7 @@ endforeach()
 
 message(STATUS "Main source file: ${MAIN_SRC}")
 message(STATUS "HTTP Server sources: ${HTTP_SERVER_SRC}")
-message(STATUS "Gomoku Server sources: ${GOMOKU_SERVER_SRC}")
+# message(STATUS "Gomoku Server sources: ${GOMOKU_SERVER_SRC}")
+message(STATUS "Chat Server sources: ${Chat_SERVER_SRC}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")

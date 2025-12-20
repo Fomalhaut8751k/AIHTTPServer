@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            height: 50px;
+            background-color: #2c2c2c;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            color: white;
+        }
+
+        .app-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .nav-icon:hover {
+            opacity: 1;
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧边栏 */
+        .sidebar {
+            width: 300px;
+            background-color: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 搜索框 */
+        .search-box {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            background-color: white;
+            box-shadow: 0 0 0 1px #07c160;
+        }
+
+        /* 联系人列表 */
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .empty-contacts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: #07c160;
+        }
+
+        /* 聊天区域 */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f0f0f0;
+        }
+
+        /* 聊天头部 */
+        .chat-header {
+            height: 50px;
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        /* 空白聊天界面 */
+        .empty-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+            color: #07c160;
+        }
+
+        /* 输入区域 */
+        .input-area {
+            background-color: white;
+            padding: 10px 15px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            min-height: 40px;
+            font-family: inherit;
+        }
+
+        .send-btn {
+            background-color: #07c160;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #06ad56;
+        }
+
+        .send-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* 底部标签栏 */
+        .tab-bar {
+            height: 50px;
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #aaa;
+            cursor: pointer;
+            flex: 1;
+            padding: 8px 0;
+        }
+
+        .tab-item.active {
+            color: #07c160;
+        }
+
+        .tab-icon {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .tab-label {
+            font-size: 11px;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <div style="display: flex; align-items: center;">
+            <i class="fas fa-comment-alt" style="margin-right: 10px;"></i>
+            <div class="app-name">WeChat</div>
+        </div>
+        <div>
+            <i class="fas fa-plus nav-icon"></i>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="搜索">
+            </div>
+            
+            <div class="contact-list">
+                <div class="empty-contacts">
+                    <i class="fas fa-user-friends empty-icon"></i>
+                    <h3>暂无联系人</h3>
+                    <p>点击右上角"+"添加好友</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 聊天区域 -->
+        <div class="chat-area">
+            <!-- 聊天头部 -->
+            <div class="chat-header">
+                选择一个聊天开始对话
+            </div>
+            
+            <!-- 空白聊天界面 -->
+            <div class="empty-chat">
+                <i class="fas fa-comments chat-icon"></i>
+                <h2>开始聊天</h2>
+                <p>从左侧选择或添加好友开始聊天</p>
+            </div>
+            
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <textarea class="message-input" id="message-input" placeholder="选择一个联系人开始聊天..." rows="1" disabled></textarea>
+                <button class="send-btn" id="send-btn" disabled>发送</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部标签栏 -->
+    <div class="tab-bar">
+        <div class="tab-item active">
+            <i class="fas fa-comment-alt tab-icon"></i>
+            <div class="tab-label">微信</div>
+        </div>
+        <div class="tab-item">
+            <i class="fas fa-address-book tab-icon"></i>
+            <div class="tab-label">通讯录</div>
+        </div>
+        <div class="tab-item">
+            <i class="fas fa-compass tab-icon"></i>
+            <div class="tab-label">发现</div>
+        </div>
+        <div class="tab-item">
+            <i class="fas fa-user tab-icon"></i>
+            <div class="tab-label">我</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            
+            // 自动调整输入框高度
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            // 模拟添加好友功能
+            const addFriendBtn = document.querySelector('.fa-plus');
+            addFriendBtn.addEventListener('click', function() {
+                // alert('添加好友功能（模拟）\n这里可以集成实际的添加好友逻辑');
+                // 发送POST请求到搜索页面
+                fetch('/user/search', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        action: 'open_search_page'  // 可选：指定操作类型
+                    })
+                })
+                .then(response => {
+                    // 检查响应状态
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // 判断响应类型
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (contentType && contentType.includes('text/html')) {
+                        // 如果是HTML页面，则跳转到搜索页面
+                        window.location.href = '/user/search';
+                        return null; // 不解析响应体
+                    } else if (contentType && contentType.includes('application/json')) {
+                        // 如果是JSON数据，则处理数据
+                        return response.json();
+                    } else {
+                        // 其他类型的响应
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (data === null) {
+                        return; // 已经跳转到搜索页面
+                    }
+                    
+                    if (typeof data === 'object') {
+                        // 处理JSON响应
+                        if (data.redirectUrl) {
+                            // 如果有重定向URL
+                            window.location.href = data.redirectUrl;
+                        } else if (data.success) {
+                            // 显示成功消息
+                            showAlert(data.message || '操作成功！');
+                            
+                            // 如果有返回的用户列表，更新UI
+                            if (data.users) {
+                                updateUserList(data.users);
+                            }
+                        } else {
+                            // 显示错误消息
+                            showAlert(data.message || '操作失败！', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('请求失败:', error);
+                    showAlert('请求失败：' + error.message, 'error');
+                    
+                    // 如果服务器出错，也可以直接跳转到搜索页面
+                    // window.location.href = '/user/search';
+                });
+            });
+            
+            // 标签页切换
+            const tabItems = document.querySelectorAll('.tab-item');
+            tabItems.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabItems.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 模拟页面切换
+                    const tabLabel = this.querySelector('.tab-label').textContent;
+                    alert(`切换到 ${tabLabel} 页面`);
+                });
+            });
+            
+            // 搜索框功能
+            const searchInput = document.querySelector('.search-input');
+            searchInput.addEventListener('focus', function() {
+                alert('搜索功能（模拟）\n这里可以集成实际的好友搜索逻辑');
+            });
+            
+            // 模拟消息发送（仅当有联系人时启用）
+            sendBtn.addEventListener('click', function() {
+                if (!sendBtn.disabled) {
+                    const message = messageInput.value.trim();
+                    if (message) {
+                        alert(`发送消息：${message}\n（此处需要选中联系人才可发送）`);
+                        messageInput.value = '';
+                        messageInput.style.height = 'auto';
+                    }
+                }
+            });
+            
+            // 按Enter键发送消息
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!sendBtn.disabled) {
+                        sendBtn.click();
+                    }
+                }
+            });
+            
+            console.log('微信界面已加载');
+            console.log('当前界面：简洁空白版，无联系人，无聊天记录');
+        });
+    </script>
+</body>
+
+</html>

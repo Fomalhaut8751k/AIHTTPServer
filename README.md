@@ -3,29 +3,47 @@
 1. 2025.11.30 
     完成了`HttpRequest`功能的实现。
 
+<br>
+
 2. 2025.12.01
     完成了`HttpContext`, `HttpResponse`功能的实现
+
+<br>
 
 3. 2025.12.02
     完成了`router`功能的实现
 
+<br>
+
 3. 2025.12.03
     完成了`session`功能的实现
+
+<br>
 
 4. 2025.12.04 
     完成了`middleware`以及`ssl`部分功能的实现
 
+<br>
+
 5. 2025.12.05
     完成了`ssl`功能的实现
+
+<br>
 
 6. 2025.12.07
     完成了`http`整体功能的编写
 
+<br>
+
 7. 2025.12.14
     完成了五子棋部分的编写，但功能仍存在问题
 
+<br>
+
 8. 2025.12.15
     发现或解决了以下问题
+
+<br>
 
 - 问题一：
     浏览器输入`127.0.0.1:8081`时访问失败，出现以下界面：
@@ -53,7 +71,8 @@
     return state_ == kConnected;  // state_ == kConnecting; 错误
     ```
 
-<br>
+    <br>
+
 
 - 问题二：
     浏览器输入`127.0.0.1:8081`时访问失败，出现以下界面：
@@ -88,13 +107,15 @@
 
     ![](images/error11.png)
 
-<br>
+    <br>
 
 - 问题三
 
     正常注册登录后，显示如下的结果：
 
     ![](images/error12.png)
+
+<br>
 
 10. 2025.12.16
 
@@ -109,6 +130,7 @@
     ![](images/error14.png)
     ![](images/error15.png)
 
+    <br>
 
 - 问题四
 
@@ -130,6 +152,8 @@
 
     
     ![](images/error16.png)
+
+<br>
 
 11. 2025.12.17
 
@@ -153,6 +177,8 @@
 
     修改后就可以正常进入菜单了。
 
+    <br>
+
 - 问题五
 
     ai无限思考中......
@@ -173,6 +199,8 @@
 
     修改，将`.Get()`改成`.Post()`，就可以正常落子了
 
+    <br>
+
 - 问题六
 
     AI只会沿着第一行落子，并且判定胜利条件有误
@@ -181,9 +209,84 @@
 
     均已修复，所有功能都正常了。
 
+<br>
 
-12. 用该HTTP框架实现集群聊天服务器
-
-- 
+# 用该HTTP框架实现集群聊天服务器
 
 
+## 路由设计
+
+在原先基于muduo的集群聊天服务器中，用户会给`server_`提供`onMessage(const TcpConnectionPtr&, Buffer*, Timestamp)`，在该函数中，接收到的消息会放在`buffer`中，通过`buffer`的函数可以将其中的数据转为字符串，再通过`json::parse()`进行反序列化。
+```cpp
+string buf = buffer->retrieveAllAsString();
+json js = json::parse(buf);
+```
+其中`js["msgid"]`表示该消息的类型(登录，注册，单人聊天等等)。然后根据消息的类型调用相应的回调函数。
+```cpp
+unordered_map<int, MsgHandler> _msgHandlerMap;
+...
+_msgHandlerMap.insert({LOGIN_MSG, std::bind(&ChatService::login, this, _1, _2, _3)});
+_msgHandlerMap.insert({REG_MSG, std::bind(&ChatService::reg, this, _1, _2, _3)});
+_msgHandlerMap.insert({ONE_CHAT_MSG, std::bind(&ChatService::oneChat, this, _1, _2, _3)});
+...
+```
+
+http框架中，`HttpServer`已经为`server_`提供了相应的`onMessage()`(和`onConnection()`)方法。因此在使用方法上有所不同。通过注册路由的方法。
+```cpp
+class LoginHandler: public http::router::RouterHandler
+{
+public:
+    explicit LoginHandler(ChatServer* server): server_(server){}
+    void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
+private:
+    ChatServer* server_;
+    http::MysqlUtil mysqlUtil_;
+};
+
+...
+
+httpServer_.Post("/login", std::make_shared<LoginHandler>(this));
+```
+这里的路由扮演着`msgid`相同的角色，在`handle()`函数中，通过解析请求体重的内容来获取客户端发送的内容。
+```cpp
+json parsed = json::parse(req.getBody());
+```
+因此我们可以按照消息类型注册若干个路由
+```cpp
+// 登录注册入口页面
+httpServer_.Get("/", std::make_shared<EntryHandler>(this));
+httpServer_.Get("/entry", std::make_shared<EntryHandler>(this));
+
+httpServer_.Post("/login", std::make_shared<LoginHandler>(this));  // 登录(客户端点击登录时)
+httpServer_.Post("/register", std::make_shared<RegisterHandler>(this));  // 注册
+
+// 登录后进入用户界面
+httpServer_.Post("/user/friend", std::make_shared<FriendChatHandler>(this));  // 单人聊天 
+httpServer_.Post("/user/friend/send", std::make_shared<FriendChatSendHandler>(this)); // 向好友发送消息
+httpServer_.Post("/user/friend/exit", std::make_shared<FriendChatExitHandler>(this)); // 退出好友聊天
+
+httpServer_.Post("/user/group", std::make_shared<GroupChatHandler>(this));  // 群聊聊天 
+httpServer_.Post("/user/group/send", std::make_shared<GroupChatSendHandler>(this)); // 向群聊发送消息
+httpServer_.Post("/user/group/exit", std::make_shared<GroupChatExitHandler>(this)); // 退出群聊聊天
+
+httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退出登录 
+```
+
+## 数据库设计
+
+数据库的设计符合第三范式。
+
+![](images/database.png)
+
+这里登录状态的在线和离线表示用户是否在与自己的聊天窗口中，如果是，则直接显示，否则都存入离线消息数据库中。
+
+
+<br>
+
+12. 2025.12.20
+
+    完成了用户的注册和登录
+
+    ![](images/login.png)
+
+<br>
