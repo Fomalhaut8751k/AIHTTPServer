@@ -1,12 +1,13 @@
-#include "../../include/handlers/SearchUserHandler.h"
+#include "../../include/handlers/FriendAddHandler.h"
+#include <string>
 
-void SearchUserHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
+void FriendAddHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
 {
-    // Json 解析使用try catch捕获异常
+    std::shared_ptr<http::session::Session> session = nullptr;
     try
     {
         // 检查用户是否登录
-        auto session = server_->getSessionManager()->getSession(req, resp);
+        session = server_->getSessionManager()->getSession(req, resp);
         logger_->INFO("session->getValue(\"isLoggedIn\") = " + session->getValue("isLoggedIn"));
         if(session->getValue("isLoggedIn") != "true")
         {
@@ -24,28 +25,26 @@ void SearchUserHandler::handle(const http::HttpRequest& req, http::HttpResponse*
         }
 
         json parsed = json::parse(req.getBody());
-        assert(parsed["action"] == "search_user");
-        std::string username = parsed["username"];
+        std::string strTargetUserId = parsed["targetUserId"];
+        int friendId = std::stoi(strTargetUserId);
+        int userId = std::stoi(session->getValue("userId"));
 
-        // 验证查找的用户是否存在
-        int userId = queryUserId(username);
-        if(userId != -1)
-        {  // 找到对应的用户
+        if(addFriend(userId, friendId)){
             json successResp;
             successResp["status"] = true;
-            successResp["targetId"] = std::to_string(userId);
+
             std::string successBody = successResp.dump(4);
 
-            resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
+            resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");   // 版本，状态码，...
             resp->setCloseConnection(false);
             resp->setContentType("application/json");
             resp->setContentLength(successBody.size());
             resp->setBody(successBody);
+            return;
         }
-        else
-        {   // 找不到对应的用户
+        else{
             json failureResp;
-            failureResp["status"] = true;
+            failureResp["status"] = false;
             std::string failureBody = failureResp.dump(4);
 
             resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
@@ -53,8 +52,8 @@ void SearchUserHandler::handle(const http::HttpRequest& req, http::HttpResponse*
             resp->setContentType("application/json");
             resp->setContentLength(failureBody.size());
             resp->setBody(failureBody);
+            return;
         }
-        return;
     }
     catch(const std::exception& e)
     {
@@ -72,17 +71,22 @@ void SearchUserHandler::handle(const http::HttpRequest& req, http::HttpResponse*
     }
 }
 
-int SearchUserHandler::queryUserId(const std::string &username)
+bool FriendAddHandler::addFriend(const int& myId, const int& friendId)
 {
-    // 前端用户传来账号密码，查找数据库是否有该账号密码
-    // 使用预处理语句，防止sql注入
-    std::string sql = "SELECT id FROM User WHERE name = ?";
-    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, username);
-    if(res->next())
-    {
-        int id = res->getInt("id");
-        return id;
+    std::string sql = "INSERT INTO Friend (userid, friendid) VALUES (?, ?)";
+    int ret = mysqlUtil_.executeUpdate(sql, myId, friendId);
+    if(ret > 0){
+        ret = mysqlUtil_.executeUpdate(sql, friendId, myId);
     }
-    // 如果查询结果为空，返回-1
-    return -1;
+    else{
+        return false;
+    }
+    if(ret > 0){
+        return true;
+    }
+    else{  // 如果第一条成功了第二条失败了，就把第一条删掉
+        sql = "DELETE FROM Friend WHERE userid = ? AND friendid = ?";
+        mysqlUtil_.executeUpdate(sql, myId, friendId);
+    }
+    return false;
 }

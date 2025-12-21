@@ -15,7 +15,9 @@
 #include "../include/handlers/LogoutHandler.h"
 #include "../include/handlers/RegisterHandler.h"
 #include "../include/handlers/UserHandler.h"
+#include "../include/handlers/SearchHandler.h"
 #include "../include/handlers/SearchUserHandler.h"
+#include "../include/handlers/FriendAddHandler.h"
 
 using namespace http;
 
@@ -86,7 +88,11 @@ void ChatServer::initializeRouter()
     // 退出群聊聊天
     httpServer_.Get("/user/group/exit", std::make_shared<GroupExitHandler>(this));
     // 陌生人查找
-    httpServer_.Get("/user/search", std::make_shared<SearchUserHandler>(this));
+    httpServer_.Post("/user/search", std::make_shared<SearchHandler>(this));
+    // 查询陌生人是否存在
+    httpServer_.Post("/user/search/exist", std::make_shared<SearchUserHandler>(this));
+    // 确认添加好友
+    httpServer_.Post("/user/search/add", std::make_shared<FriendAddHandler>(this));
 }
 
 void ChatServer::initializeMiddleWare()

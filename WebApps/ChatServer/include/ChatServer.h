@@ -23,7 +23,9 @@ class FriendExitHandler;
 class GroupHandler;
 class GroupSendHandler;
 class GroupExitHandler;
+class SearchHandler;
 class SearchUserHandler;
+class FriendAddHandler;
 
 class ChatServer
 {
@@ -61,8 +63,10 @@ private:
     friend class GroupHandler;
     friend class GroupSendHandler;
     friend class GroupExitHandler;
+    friend class SearchHandler;
     friend class SearchUserHandler;
-
+    friend class FriendAddHandler;
+    
     http::HttpServer httpServer_;
     http::MysqlUtil mysqlUtil_;
 

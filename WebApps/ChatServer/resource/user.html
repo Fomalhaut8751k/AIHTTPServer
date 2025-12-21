@@ -253,7 +253,7 @@
             <div class="app-name">WeChat</div>
         </div>
         <div>
-            <i class="fas fa-plus nav-icon"></i>
+            <i class="fas fa-plus nav-icon" title="添加好友"></i>
         </div>
     </div>
 
@@ -321,79 +321,355 @@
             const messageInput = document.getElementById('message-input');
             const sendBtn = document.getElementById('send-btn');
             
-            // 自动调整输入框高度
-            messageInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-            
             // 模拟添加好友功能
             const addFriendBtn = document.querySelector('.fa-plus');
             addFriendBtn.addEventListener('click', function() {
-                // alert('添加好友功能（模拟）\n这里可以集成实际的添加好友逻辑');
-                // 发送POST请求到搜索页面
+                // 切换到搜索模式
+                switchToSearchMode();
+                
+                // 发送POST请求获取搜索数据
                 fetch('/user/search', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json' 
                     },
                     body: JSON.stringify({
-                        userId: userId,
-                        action: 'open_search_page'  // 可选：指定操作类型
+                        action: 'get_search_ui'  // 请求搜索UI数据
                     })
                 })
                 .then(response => {
-                    // 检查响应状态
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    // 判断响应类型
-                    const contentType = response.headers.get('content-type');
-                    
-                    if (contentType && contentType.includes('text/html')) {
-                        // 如果是HTML页面，则跳转到搜索页面
-                        window.location.href = '/user/search';
-                        return null; // 不解析响应体
-                    } else if (contentType && contentType.includes('application/json')) {
-                        // 如果是JSON数据，则处理数据
-                        return response.json();
-                    } else {
-                        // 其他类型的响应
-                        return response.text();
-                    }
+                    return response.json();
                 })
                 .then(data => {
-                    if (data === null) {
-                        return; // 已经跳转到搜索页面
-                    }
+                    console.log('收到搜索数据:', data);
                     
-                    if (typeof data === 'object') {
-                        // 处理JSON响应
-                        if (data.redirectUrl) {
-                            // 如果有重定向URL
-                            window.location.href = data.redirectUrl;
-                        } else if (data.success) {
-                            // 显示成功消息
-                            showAlert(data.message || '操作成功！');
-                            
-                            // 如果有返回的用户列表，更新UI
-                            if (data.users) {
-                                updateUserList(data.users);
-                            }
-                        } else {
-                            // 显示错误消息
-                            showAlert(data.message || '操作失败！', 'error');
-                        }
+                    // 如果有数据，可以更新UI
+                    if (data && data.suggestedUsers) {
+                        // 可以在这里显示推荐用户
+                        updateSuggestedUsers(data.suggestedUsers);
                     }
                 })
                 .catch(error => {
                     console.error('请求失败:', error);
-                    showAlert('请求失败：' + error.message, 'error');
-                    
-                    // 如果服务器出错，也可以直接跳转到搜索页面
-                    // window.location.href = '/user/search';
+                    alert('搜索功能暂时不可用');
                 });
+            });
+            
+            // 切换到搜索模式
+            function switchToSearchMode() {
+                // 1. 修改右上角图标：+ 换成 ←
+                const navIcon = document.querySelector('.fa-plus');
+                navIcon.classList.remove('fa-plus');
+                navIcon.classList.add('fa-arrow-left');
+                navIcon.title = '返回微信';
+                
+                // 移除原来的点击事件，添加返回功能
+                const newNavIcon = navIcon.cloneNode(true);
+                navIcon.parentNode.replaceChild(newNavIcon, navIcon);
+                
+                newNavIcon.addEventListener('click', function() {
+                    switchBackToWeChat();
+                });
+                
+                // 2. 修改聊天头部
+                const chatHeader = document.querySelector('.chat-header');
+                chatHeader.textContent = '用户搜索';
+                
+                // 3. 修改空白聊天区域
+                const emptyChat = document.querySelector('.empty-chat');
+                emptyChat.innerHTML = `
+                    <i class="fas fa-search chat-icon"></i>
+                    <h2>搜索陌生人</h2>
+                    <p>按用户名搜索并添加好友</p>
+                `;
+                
+                // 4. 修改输入区域
+                messageInput.placeholder = '按用户名进行搜索';
+                messageInput.disabled = false;
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // 5. 修改按钮
+                sendBtn.textContent = '查找';
+                sendBtn.disabled = true;
+                
+                // 重新绑定按钮点击事件
+                sendBtn.onclick = function() {
+                    performSearch();
+                };
+                
+                // 6. 修改左侧边栏的微信图标
+                const wechatIcon = document.querySelector('.fa-comment-alt');
+                if (wechatIcon) {
+                    wechatIcon.classList.remove('fa-comment-alt');
+                    wechatIcon.classList.add('fa-search');
+                }
+                
+                // 7. 添加输入监听，启用查找按钮
+                messageInput.addEventListener('input', function() {
+                    const searchText = this.value.trim();
+                    sendBtn.disabled = searchText.length === 0;
+                });
+                
+                // 8. 修改标题（可选）
+                document.title = '微信 - 用户搜索';
+                
+                console.log('已切换到搜索模式');
+            }
+            
+            // 执行搜索
+            function performSearch() {
+                const searchText = messageInput.value.trim();
+                
+                if (!searchText) {
+                    alert('请输入要搜索的用户名');
+                    return;
+                }
+                
+                console.log('正在搜索用户:', searchText);
+                
+                // 禁用按钮，显示加载状态
+                const originalText = sendBtn.textContent;
+                sendBtn.textContent = '搜索中...';
+                sendBtn.disabled = true;
+                
+                // 发送搜索请求
+                fetch('/user/search/exist', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        action: 'search_user',
+                        username: searchText,
+                        timestamp: Date.now()
+                    })
+                })
+                // .then(response => response.json())
+                .then(response => {
+                    if(response.status == 200){
+                        return response.json();
+                    }
+                    else{
+                        throw new Error('搜索失败，未知错误！');
+                    }
+                })
+                .then(data => {
+                    console.log('搜索结果:', data);
+                    
+                    // 恢复按钮状态
+                    sendBtn.textContent = originalText;
+                    sendBtn.disabled = false;
+                    
+                    // 处理搜索结果
+                    if(!data){
+                        throw new Error('服务器返回空数据');
+                    } 
+                    if (data.status == true) {
+                        displaySearchResults([{
+                            userId: data.targetId,
+                            username: searchText  // 使用搜索的用户名
+                        }]);
+                    } else {
+                        alert('搜索失败，未找到对应的用户');
+                    }
+                })
+                .catch(error => {
+                    console.error('搜索失败:', error);
+                    
+                    // 恢复按钮状态
+                    sendBtn.textContent = originalText;
+                    sendBtn.disabled = false;
+                    
+                    alert('搜索失败，请稍后重试');
+                });
+            }
+            
+            // 显示搜索结果
+            function displaySearchResults(users) {
+                const emptyChat = document.querySelector('.empty-chat');
+                
+                if (users.length === 0) {
+                    emptyChat.innerHTML = `
+                        <i class="fas fa-user-slash chat-icon"></i>
+                        <h2>未找到用户</h2>
+                        <p>没有找到匹配的用户名</p>
+                        <button onclick="clearSearch()" style="margin-top: 20px; padding: 10px 20px; background: #07c160; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            重新搜索
+                        </button>
+                    `;
+                    return;
+                }
+                
+                // 显示用户列表
+                let usersHtml = `
+                    <div style="text-align: left; width: 100%; max-width: 600px; margin: 0 auto;">
+                        <h3 style="margin-bottom: 20px; color: #333;">找到 ${users.length} 个用户</h3>
+                `;
+                
+                users.forEach((user, index) => {
+                    usersHtml += `
+                        <div style="display: flex; align-items: center; padding: 15px; background: white; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="width: 50px; height: 50px; background: #07c160; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                <i class="fas fa-user" style="color: white; font-size: 20px;"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold; font-size: 16px; color: #333;">${user.username || '未知用户'}</div>
+                                <div style="font-size: 14px; color: #666; margin-top: 5px;">ID: ${user.userId || 'N/A'}</div>
+                            </div>
+                            <button onclick="addFriend('${user.userId}', '${user.username}')" 
+                                    style="padding: 8px 15px; background: #07c160; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                添加好友
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                usersHtml += `
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button onclick="clearSearch()" style="padding: 10px 20px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                                重新搜索
+                            </button>
+                            <button onclick="switchBackToWeChat()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                返回微信
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                emptyChat.innerHTML = usersHtml;
+            }
+            
+            // 添加好友功能
+            window.addFriend = function(userId, username) {
+                if (!confirm(`确定要添加 ${username} 为好友吗？`)) {
+                    return;
+                }
+                
+                fetch('/user/search/add', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        action: 'add_friend',
+                        targetUserId: userId,
+                        targetUsername: username
+                    })
+                })
+                // .then(response => response.json())
+                .then(response => {
+                    if(response.status == 200){
+                        return response.json();
+                    }
+                    else{
+                        throw new Error('添加失败，未知错误！');
+                    }
+                })
+                .then(data => {
+                    if (data.status == true) {
+                        // alert(`已发送好友请求给 ${username}`);
+                        // 可以在这里更新UI，比如显示"已发送请求"
+                        alert("添加好友成功")
+                    } else {
+                        alert(data.message || '添加好友失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('添加好友失败:', error);
+                    alert('添加好友失败');
+                });
+            };
+            
+            // 清空搜索
+            window.clearSearch = function() {
+                messageInput.value = '';
+                messageInput.focus();
+                sendBtn.disabled = true;
+                
+                // 恢复搜索界面
+                const emptyChat = document.querySelector('.empty-chat');
+                emptyChat.innerHTML = `
+                    <i class="fas fa-search chat-icon"></i>
+                    <h2>搜索陌生人</h2>
+                    <p>按用户名搜索并添加好友</p>
+                `;
+            };
+            
+            // 切换回微信模式
+            function switchBackToWeChat() {
+                // 1. 恢复右上角图标
+                const navIcon = document.querySelector('.fa-arrow-left');
+                if (navIcon) {
+                    navIcon.classList.remove('fa-arrow-left');
+                    navIcon.classList.add('fa-plus');
+                    navIcon.title = '添加好友';
+                    
+                    // 移除返回事件，重新绑定搜索事件
+                    const newNavIcon = navIcon.cloneNode(true);
+                    navIcon.parentNode.replaceChild(newNavIcon, navIcon);
+                    
+                    newNavIcon.addEventListener('click', function() {
+                        switchToSearchMode();
+                        fetch('/user/search/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'get_search_ui'})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('收到搜索数据:', data);
+                        })
+                        .catch(error => {
+                            console.error('请求失败:', error);
+                        });
+                    });
+                }
+                
+                // 2. 恢复聊天头部
+                const chatHeader = document.querySelector('.chat-header');
+                chatHeader.textContent = '选择一个聊天开始对话';
+                
+                // 3. 恢复空白聊天区域
+                const emptyChat = document.querySelector('.empty-chat');
+                emptyChat.innerHTML = `
+                    <i class="fas fa-comments chat-icon"></i>
+                    <h2>开始聊天</h2>
+                    <p>从左侧选择或添加好友开始聊天</p>
+                `;
+                
+                // 4. 恢复输入区域
+                messageInput.placeholder = '选择一个联系人开始聊天...';
+                messageInput.disabled = true;
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // 5. 恢复按钮
+                sendBtn.textContent = '发送';
+                sendBtn.disabled = true;
+                sendBtn.onclick = null;
+                
+                // 6. 恢复微信图标
+                const searchIcon = document.querySelector('.fa-search');
+                if (searchIcon && searchIcon.closest('.navbar')) {
+                    searchIcon.classList.remove('fa-search');
+                    searchIcon.classList.add('fa-comment-alt');
+                }
+                
+                // 7. 恢复标题
+                document.title = '微信';
+                
+                console.log('已切换回微信模式');
+            }
+            
+            // 自动调整输入框高度
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
             });
             
             // 标签页切换
@@ -416,7 +692,7 @@
             });
             
             // 模拟消息发送（仅当有联系人时启用）
-            sendBtn.addEventListener('click', function() {
+            const originalSendBtnClick = function() {
                 if (!sendBtn.disabled) {
                     const message = messageInput.value.trim();
                     if (message) {
@@ -425,7 +701,7 @@
                         messageInput.style.height = 'auto';
                     }
                 }
-            });
+            };
             
             // 按Enter键发送消息
             messageInput.addEventListener('keydown', function(e) {

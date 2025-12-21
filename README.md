@@ -290,3 +290,12 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     ![](images/login.png)
 
 <br>
+
+13. 2025.12.21
+
+    完成了添加用户的功能
+
+    ![](images/addfriend1.png)
+
+    ![](images/addfriend2.png)
+    
