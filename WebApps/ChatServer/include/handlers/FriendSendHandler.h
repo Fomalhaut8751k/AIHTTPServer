@@ -11,7 +11,10 @@ public:
 
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
 private:
+    bool writeIntoTargetOfflineMessage(const int& myId, const int& targetId, const std::string& message, int64_t timestamp);
+
     ChatServer* server_;
+    http::MysqlUtil mysqlUtil_;
 };
 
 #endif

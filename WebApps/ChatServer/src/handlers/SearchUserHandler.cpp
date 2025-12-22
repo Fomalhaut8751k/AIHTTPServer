@@ -45,7 +45,7 @@ void SearchUserHandler::handle(const http::HttpRequest& req, http::HttpResponse*
         else
         {   // 找不到对应的用户
             json failureResp;
-            failureResp["status"] = true;
+            failureResp["status"] = false;
             std::string failureBody = failureResp.dump(4);
 
             resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");

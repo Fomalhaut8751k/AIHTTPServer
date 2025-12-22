@@ -299,3 +299,16 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
     ![](images/addfriend2.png)
     
+<br>
+
+14. 2025.12.22
+
+    实现了在登陆后加载页面的同时加载好友列表。
+
+    通过将发送的消息存入离线消息数据库`offlineMessage`中，当接收方登陆时就会同时从数据库中加载离线消息并显示，并从数据库中把消息删除掉。
+
+    ![](images/send1.png)
+    
+    ![](images/send2.png)
+
+    

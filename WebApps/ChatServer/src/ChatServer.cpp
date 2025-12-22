@@ -18,6 +18,8 @@
 #include "../include/handlers/SearchHandler.h"
 #include "../include/handlers/SearchUserHandler.h"
 #include "../include/handlers/FriendAddHandler.h"
+#include "../include/handlers/GetFriendListHandler.h"
+#include "../include/handlers/OfflineMessageShowHandler.h"
 
 using namespace http;
 
@@ -93,6 +95,10 @@ void ChatServer::initializeRouter()
     httpServer_.Post("/user/search/exist", std::make_shared<SearchUserHandler>(this));
     // 确认添加好友
     httpServer_.Post("/user/search/add", std::make_shared<FriendAddHandler>(this));
+    // 返回好友列表
+    httpServer_.Post("/user/friendlist", std::make_shared<GetFriendListHandler>(this));
+    // 加载离线消息
+    httpServer_.Post("/user/offlinemessage", std::make_shared<OfflineMessageShowHandler>(this));
 }
 
 void ChatServer::initializeMiddleWare()

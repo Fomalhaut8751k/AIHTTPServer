@@ -241,6 +241,51 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+        
+        /* 未读消息红点样式 - 修改为头像右上角 */
+        .unread-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 0 4px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .contact-item {
+            position: relative;
+        }
+        
+        /* 头像容器样式 */
+        .avatar-container {
+            position: relative;
+            width: 45px;
+            height: 45px;
+            margin-right: 12px;
+        }
+        
+        .avatar {
+            width: 45px;
+            height: 45px;
+            background-color: #07c160;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -321,7 +366,155 @@
             const messageInput = document.getElementById('message-input');
             const sendBtn = document.getElementById('send-btn');
             
-            // 模拟添加好友功能
+            // ========== 存储离线消息 ==========
+            let offlineMessages = {};
+            
+            // ========== 页面加载时自动获取联系人列表 ==========
+            fetch('/user/friendlist', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({
+                    action: 'get_contact_list'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('收到联系人数据:', data);
+                
+                // 处理联系人数据
+                if (data && data.contacts && data.contacts.length > 0) {
+                    updateContactList(data.contacts);
+                    
+                    // ========== 新增：获取离线消息 ==========
+                    fetchOfflineMessages();
+                    
+                } else if (data && data.status === false) {
+                    console.log('暂无联系人:', data.message);
+                } else {
+                    console.log('没有联系人数据');
+                }
+            })
+            .catch(error => {
+                console.error('获取联系人失败:', error);
+            });
+            
+            // ========== 获取离线消息函数 ==========
+            function fetchOfflineMessages() {
+                fetch('/user/offlinemessage', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        action: 'get_offline_message'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('收到离线消息数据:', data);
+                    
+                    if (data && data.status === true && data.message && data.message.length > 0) {
+                        processOfflineMessages(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取离线消息失败:', error);
+                });
+            }
+            
+            // ========== 处理离线消息 ==========
+            function processOfflineMessages(messages) {
+                offlineMessages = {};
+                
+                // 按消息来源分组
+                messages.forEach(msg => {
+                    const sourceId = msg.messageSource;
+                    
+                    if (!offlineMessages[sourceId]) {
+                        offlineMessages[sourceId] = [];
+                    }
+                    
+                    offlineMessages[sourceId].push({
+                        message: msg.message,
+                        timestamp: msg.timestamp
+                    });
+                });
+                
+                // 在联系人列表上显示红点
+                showUnreadBadges();
+            }
+            
+            // ========== 显示未读红点（修改为头像右上角） ==========
+            function showUnreadBadges() {
+                const contactItems = document.querySelectorAll('.contact-item');
+                
+                contactItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/selectContact\('(\d+)'/);
+                        if (match) {
+                            const contactId = match[1];
+                            
+                            if (offlineMessages[contactId] && offlineMessages[contactId].length > 0) {
+                                // 移除可能已存在的红点
+                                const existingBadge = item.querySelector('.unread-badge');
+                                if (existingBadge) {
+                                    existingBadge.remove();
+                                }
+                                
+                                // 获取头像容器
+                                const avatarContainer = item.querySelector('.avatar-container');
+                                if (avatarContainer) {
+                                    // 添加红点到头像容器
+                                    const badge = document.createElement('div');
+                                    badge.className = 'unread-badge';
+                                    const unreadCount = offlineMessages[contactId].length;
+                                    badge.innerHTML = unreadCount > 99 ? '99+' : unreadCount;
+                                    
+                                    // 添加悬停效果
+                                    badge.style.cursor = 'pointer';
+                                    badge.title = `${unreadCount}条未读消息`;
+                                    
+                                    avatarContainer.appendChild(badge);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // ========== 清除已读红点 ==========
+            function clearUnreadBadge(userId) {
+                delete offlineMessages[userId];
+                
+                const contactItems = document.querySelectorAll('.contact-item');
+                contactItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/selectContact\('(\d+)'/);
+                        if (match && match[1] === userId) {
+                            const badge = item.querySelector('.unread-badge');
+                            if (badge) {
+                                badge.remove();
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // ========== 模拟添加好友功能 ==========
             const addFriendBtn = document.querySelector('.fa-plus');
             addFriendBtn.addEventListener('click', function() {
                 // 切换到搜索模式
@@ -359,7 +552,7 @@
                 });
             });
             
-            // 切换到搜索模式
+            // ========== 切换到搜索模式 ==========
             function switchToSearchMode() {
                 // 1. 修改右上角图标：+ 换成 ←
                 const navIcon = document.querySelector('.fa-plus');
@@ -421,7 +614,7 @@
                 console.log('已切换到搜索模式');
             }
             
-            // 执行搜索
+            // ========== 执行搜索 ==========
             function performSearch() {
                 const searchText = messageInput.value.trim();
                 
@@ -449,7 +642,6 @@
                         timestamp: Date.now()
                     })
                 })
-                // .then(response => response.json())
                 .then(response => {
                     if(response.status == 200){
                         return response.json();
@@ -489,7 +681,7 @@
                 });
             }
             
-            // 显示搜索结果
+            // ========== 显示搜索结果 ==========
             function displaySearchResults(users) {
                 const emptyChat = document.querySelector('.empty-chat');
                 
@@ -514,8 +706,10 @@
                 users.forEach((user, index) => {
                     usersHtml += `
                         <div style="display: flex; align-items: center; padding: 15px; background: white; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="width: 50px; height: 50px; background: #07c160; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                                <i class="fas fa-user" style="color: white; font-size: 20px;"></i>
+                            <div style="position: relative; width: 50px; height: 50px; margin-right: 15px;">
+                                <div style="width: 50px; height: 50px; background: #07c160; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-user" style="color: white; font-size: 20px;"></i>
+                                </div>
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-weight: bold; font-size: 16px; color: #333;">${user.username || '未知用户'}</div>
@@ -544,7 +738,132 @@
                 emptyChat.innerHTML = usersHtml;
             }
             
-            // 添加好友功能
+            // ========== 更新联系人列表（修改为支持头像容器） ==========
+            function updateContactList(contacts) {
+                const contactListContainer = document.querySelector('.contact-list');
+                if (!contactListContainer) return;
+                
+                // 创建联系人列表HTML
+                let contactsHtml = '';
+                
+                contacts.forEach((contact, index) => {
+                    // 获取联系人名字的第一个字符作为头像
+                    const avatarText = contact.name && contact.name.length > 0 ? contact.name.charAt(0) : '?';
+                    
+                    contactsHtml += `
+                        <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background-color 0.2s;" 
+                             onclick="selectContact('${contact.id}', '${contact.name}')"
+                             onmouseover="this.style.backgroundColor='#f9f9f9'"
+                             onmouseout="this.style.backgroundColor='white'">
+                            <div class="avatar-container">
+                                <div class="avatar">
+                                    ${avatarText}
+                                </div>
+                                <!-- 红点将动态添加到这里 -->
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold; font-size: 15px; color: #333;">${contact.name}</div>
+                                <div style="font-size: 12px; color: #999; margin-top: 3px;">ID: ${contact.id}</div>
+                            </div>
+                            <div style="color: #07c160; font-size: 12px; font-weight: bold; margin-right: 5px;">
+                                好友
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // 更新联系人列表容器
+                contactListContainer.innerHTML = `
+                    <div style="overflow-y: auto; height: 100%;">
+                        ${contactsHtml}
+                    </div>
+                `;
+            }
+            
+            // ========== 选择联系人（已增强，包含离线消息显示） ==========
+            window.selectContact = function(userId, userName) {
+                console.log(`选择了联系人: ${userName} (ID: ${userId})`);
+                
+                // 如果在搜索模式，先切换回微信模式
+                if (document.title === '微信 - 用户搜索') {
+                    switchBackToWeChat();
+                }
+                
+                // 更新聊天头部
+                const chatHeader = document.querySelector('.chat-header');
+                chatHeader.textContent = userName;
+                
+                // 清空输入框
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // 启用输入区域
+                messageInput.placeholder = `发送消息给 ${userName}...`;
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                
+                // 存储当前选中的联系人
+                window.currentContact = { id: userId, name: userName };
+                
+                // 显示聊天历史（包括离线消息）
+                displayChatHistory(userId, userName);
+            };
+            
+            // ========== 显示聊天历史（包括离线消息） ==========
+            function displayChatHistory(userId, userName) {
+                const emptyChat = document.querySelector('.empty-chat');
+                
+                let chatHtml = `
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                        <div style="flex: 1; padding: 20px; overflow-y: auto;" id="message-container">
+                `;
+                
+                // 检查是否有离线消息
+                if (offlineMessages[userId] && offlineMessages[userId].length > 0) {
+                    // 显示离线消息
+                    offlineMessages[userId].forEach(msg => {
+                        chatHtml += `
+                            <div style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
+                                <div style="max-width: 70%; background-color: white; color: #333; padding: 10px 15px; border-radius: 18px 18px 18px 4px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                    ${msg.message}
+                                    <div style="text-align: right; font-size: 11px; margin-top: 5px; color: #999;">
+                                        ${msg.timestamp}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // 添加提示
+                    chatHtml += `
+                        <div style="text-align: center; color: #999; padding: 10px 0; font-size: 12px; border-bottom: 1px solid #eee; margin-bottom: 15px;">
+                            以上是离线消息
+                        </div>
+                    `;
+                    
+                    // 清除已读的离线消息
+                    clearUnreadBadge(userId);
+                    
+                } else {
+                    // 没有离线消息，显示初始提示
+                    chatHtml += `
+                        <div style="text-align: center; color: #999; padding: 40px 0;">
+                            <i class="fas fa-comments" style="font-size: 40px; margin-bottom: 15px;"></i>
+                            <h3>开始与 ${userName} 聊天</h3>
+                            <p>发送第一条消息开始对话</p>
+                        </div>
+                    `;
+                }
+                
+                chatHtml += `
+                        </div>
+                    </div>
+                `;
+                
+                emptyChat.innerHTML = chatHtml;
+            }
+            
+            // ========== 添加好友功能 ==========
             window.addFriend = function(userId, username) {
                 if (!confirm(`确定要添加 ${username} 为好友吗？`)) {
                     return;
@@ -561,7 +880,6 @@
                         targetUsername: username
                     })
                 })
-                // .then(response => response.json())
                 .then(response => {
                     if(response.status == 200){
                         return response.json();
@@ -572,9 +890,38 @@
                 })
                 .then(data => {
                     if (data.status == true) {
-                        // alert(`已发送好友请求给 ${username}`);
-                        // 可以在这里更新UI，比如显示"已发送请求"
                         alert("添加好友成功")
+                        fetch('/user/friendlist', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify({
+                                action: 'get_contact_list'
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('收到联系人数据:', data);
+                            
+                            // 处理联系人数据
+                            if (data && data.contacts && data.contacts.length > 0) {
+                                updateContactList(data.contacts);
+                            } else if (data && data.status === false) {
+                                console.log('暂无联系人:', data.message);
+                            } else {
+                                console.log('没有联系人数据');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取联系人失败:', error);
+                        });
+
                     } else {
                         alert(data.message || '添加好友失败');
                     }
@@ -585,7 +932,7 @@
                 });
             };
             
-            // 清空搜索
+            // ========== 清空搜索 ==========
             window.clearSearch = function() {
                 messageInput.value = '';
                 messageInput.focus();
@@ -600,7 +947,7 @@
                 `;
             };
             
-            // 切换回微信模式
+            // ========== 切换回微信模式 ==========
             function switchBackToWeChat() {
                 // 1. 恢复右上角图标
                 const navIcon = document.querySelector('.fa-arrow-left');
@@ -666,13 +1013,13 @@
                 console.log('已切换回微信模式');
             }
             
-            // 自动调整输入框高度
+            // ========== 自动调整输入框高度 ==========
             messageInput.addEventListener('input', function() {
                 this.style.height = 'auto';
                 this.style.height = (this.scrollHeight) + 'px';
             });
             
-            // 标签页切换
+            // ========== 标签页切换 ==========
             const tabItems = document.querySelectorAll('.tab-item');
             tabItems.forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -685,36 +1032,140 @@
                 });
             });
             
-            // 搜索框功能
+            // ========== 搜索框功能 ==========
             const searchInput = document.querySelector('.search-input');
             searchInput.addEventListener('focus', function() {
                 alert('搜索功能（模拟）\n这里可以集成实际的好友搜索逻辑');
             });
             
-            // 模拟消息发送（仅当有联系人时启用）
+            // ========== 消息发送功能 ==========
             const originalSendBtnClick = function() {
-                if (!sendBtn.disabled) {
+                console.log('发送函数被调用，当前联系人:', window.currentContact);
+                
+                if (!sendBtn.disabled && window.currentContact) {
                     const message = messageInput.value.trim();
+                    console.log('要发送的消息:', message);
+                    
                     if (message) {
-                        alert(`发送消息：${message}\n（此处需要选中联系人才可发送）`);
-                        messageInput.value = '';
-                        messageInput.style.height = 'auto';
+                        // 获取当前选中的联系人
+                        const currentContact = window.currentContact;
+                        
+                        // 发送消息到服务器
+                        fetch('/user/friend/send', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify({
+                                action: 'send_message',
+                                targetUserId: currentContact.id,
+                                targetUsername: currentContact.name,
+                                message: message,
+                                timestamp: Date.now()
+                            })
+                        })
+                        .then(response => {
+                            console.log('收到服务器响应:', response.status);
+                            if(response.status == 200){
+                                return response.json();
+                            }
+                            else{
+                                throw new Error('发送失败，状态码:' + response.status);
+                            }
+                        })
+                        .then(data => {
+                            console.log('发送消息响应:', data);
+                            
+                            if (data && data.status == true) {
+                                // 发送成功，在界面上显示消息
+                                displayMessage(message, true); // true表示是自己发送的消息
+                                
+                                // 清空输入框
+                                messageInput.value = '';
+                                messageInput.style.height = 'auto';
+                                
+                            } else {
+                                alert(data.message || '消息发送失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('发送消息失败:', error);
+                            alert('发送失败: ' + error.message);
+                        });
+                        
+                    } else {
+                        alert('请输入消息内容');
                     }
+                } else {
+                    alert('请先选择一个联系人开始聊天');
+                    console.log('发送失败原因: sendBtn.disabled=', sendBtn.disabled, 'currentContact=', window.currentContact);
                 }
             };
-            
-            // 按Enter键发送消息
+
+            // ========== 显示消息 ==========
+            function displayMessage(message, isMyMessage) {
+                const messageContainer = document.getElementById('message-container');
+                if (!messageContainer) return;
+                
+                // 移除初始提示
+                const initialPrompt = messageContainer.querySelector('div[style*="text-align: center"]');
+                if (initialPrompt) {
+                    initialPrompt.remove();
+                }
+                
+                // 创建消息元素
+                const messageDiv = document.createElement('div');
+                messageDiv.style.display = 'flex';
+                messageDiv.style.justifyContent = isMyMessage ? 'flex-end' : 'flex-start';
+                messageDiv.style.marginBottom = '15px';
+                
+                const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                if (isMyMessage) {
+                    // 自己发送的消息
+                    messageDiv.innerHTML = `
+                        <div style="max-width: 70%; background-color: #07c160; color: white; padding: 10px 15px; border-radius: 18px 18px 4px 18px; font-size: 14px;">
+                            ${message}
+                            <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.8;">
+                                ${timeString}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 对方发送的消息
+                    messageDiv.innerHTML = `
+                        <div style="max-width: 70%; background-color: white; color: #333; padding: 10px 15px; border-radius: 18px 18px 18px 4px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            ${message}
+                            <div style="text-align: right; font-size: 11px; margin-top: 5px; color: #999;">
+                                ${timeString}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                messageContainer.appendChild(messageDiv);
+                
+                // 滚动到底部
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+
+            // ========== 绑定发送按钮点击事件 ==========
+            sendBtn.addEventListener('click', function() {
+                console.log('发送按钮被点击');
+                originalSendBtnClick();
+            });
+
+            // ========== 按Enter键发送消息 ==========
             messageInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    if (!sendBtn.disabled) {
-                        sendBtn.click();
-                    }
+                    console.log('Enter键被按下');
+                    originalSendBtnClick();
                 }
             });
-            
+
             console.log('微信界面已加载');
-            console.log('当前界面：简洁空白版，无联系人，无聊天记录');
+            console.log('当前界面：简洁空白版，支持离线消息显示');
         });
     </script>
 </body>
