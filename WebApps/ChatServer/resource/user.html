@@ -130,6 +130,7 @@
             padding: 0 15px;
             font-weight: bold;
             color: #666;
+            flex-shrink: 0; /* 防止头部被压缩 */
         }
 
         /* 空白聊天界面 */
@@ -150,6 +151,23 @@
             color: #07c160;
         }
 
+        /* 聊天消息容器 */
+        .chat-messages-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 确保内部滚动正确 */
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto; /* 允许垂直滚动 */
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* 重要：允许内容溢出并滚动 */
+        }
+
         /* 输入区域 */
         .input-area {
             background-color: white;
@@ -157,6 +175,7 @@
             border-top: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
+            flex-shrink: 0; /* 防止输入区域被压缩 */
         }
 
         .message-input {
@@ -199,6 +218,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
+            flex-shrink: 0; /* 防止底部被压缩 */
         }
 
         .tab-item {
@@ -224,24 +244,25 @@
             font-size: 11px;
         }
 
-        /* 滚动条样式 */
+        /* 滚动条样式 - 增强 */
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: rgba(241, 241, 241, 0.5);
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: #c1c1c1;
-            border-radius: 2px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
-        
+
         /* 未读消息红点样式 - 修改为头像右上角 */
         .unread-badge {
             position: absolute;
@@ -286,6 +307,103 @@
             color: white;
             font-size: 18px;
         }
+        
+        /* 消息样式 */
+        .message-self {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+        
+        .message-other {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+        
+        .message-bubble-self {
+            max-width: 70%;
+            background-color: #07c160;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 18px 18px 4px 18px;
+            font-size: 14px;
+            word-break: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .message-bubble-other {
+            max-width: 70%;
+            background-color: white;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 18px 18px 18px 4px;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            word-break: break-word;
+        }
+        
+        .message-time {
+            text-align: right;
+            font-size: 11px;
+            margin-top: 5px;
+            opacity: 0.8;
+            color: inherit;
+        }
+        
+        .message-time-other {
+            color: #999;
+        }
+        
+        .offline-divider {
+            text-align: center;
+            color: #999;
+            padding: 10px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+            margin: 0 20px 15px 20px;
+        }
+        
+        .message-status {
+            font-size: 10px;
+            margin-top: 3px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+        
+        .message-status-other {
+            color: rgba(0, 0, 0, 0.5);
+        }
+        
+        /* 聊天区域占位符 - 当没有消息时显示 */
+        .chat-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        /* 时间分隔线 */
+        .time-divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .time-divider span {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #666;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -326,11 +444,17 @@
                 选择一个聊天开始对话
             </div>
             
-            <!-- 空白聊天界面 -->
-            <div class="empty-chat">
-                <i class="fas fa-comments chat-icon"></i>
-                <h2>开始聊天</h2>
-                <p>从左侧选择或添加好友开始聊天</p>
+            <!-- 聊天消息容器 -->
+            <div class="chat-messages-container">
+                <!-- 空白聊天界面 -->
+                <div class="empty-chat" id="empty-chat">
+                    <i class="fas fa-comments chat-icon"></i>
+                    <h2>开始聊天</h2>
+                    <p>从左侧选择或添加好友开始聊天</p>
+                </div>
+                
+                <!-- 聊天消息区域（动态生成） -->
+                <div class="chat-messages" id="chat-messages" style="display: none;"></div>
             </div>
             
             <!-- 输入区域 -->
@@ -365,9 +489,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const messageInput = document.getElementById('message-input');
             const sendBtn = document.getElementById('send-btn');
+            const emptyChat = document.getElementById('empty-chat');
+            const chatMessages = document.getElementById('chat-messages');
             
-            // ========== 存储离线消息 ==========
-            let offlineMessages = {};
+            // ========== 全局数据存储 ==========
+            let offlineMessages = {};      // 离线消息（未读）
+            let chatHistory = {};          // 聊天历史记录（持久化）
+            let currentContact = null;     // 当前选中的联系人
+            let currentUserId = null;      // 当前用户ID（需要从服务器获取）
             
             // ========== 页面加载时自动获取联系人列表 ==========
             fetch('/user/friendlist', {
@@ -392,7 +521,22 @@
                 if (data && data.contacts && data.contacts.length > 0) {
                     updateContactList(data.contacts);
                     
-                    // ========== 新增：获取离线消息 ==========
+                    // 初始化聊天历史记录
+                    data.contacts.forEach(contact => {
+                        const contactId = contact.id;
+                        if (!chatHistory[contactId]) {
+                            chatHistory[contactId] = [];
+                        }
+                    });
+                    
+                    // ========== 获取当前用户ID ==========
+                    // 这里假设从服务器返回的数据中包含当前用户ID
+                    if (data.currentUserId) {
+                        currentUserId = data.currentUserId;
+                        console.log('当前用户ID:', currentUserId);
+                    }
+                    
+                    // ========== 获取离线消息 ==========
                     fetchOfflineMessages();
                     
                 } else if (data && data.status === false) {
@@ -425,7 +569,7 @@
                 .then(data => {
                     console.log('收到离线消息数据:', data);
                     
-                    if (data && data.status === true && data.message && data.message.length > 0) {
+                    if (data && data.status === true && data.message) {
                         processOfflineMessages(data.message);
                     }
                 })
@@ -434,29 +578,39 @@
                 });
             }
             
-            // ========== 处理离线消息 ==========
-            function processOfflineMessages(messages) {
+            // ========== 处理离线消息（适配新格式） ==========
+            function processOfflineMessages(messageData) {
                 offlineMessages = {};
                 
-                // 按消息来源分组
-                messages.forEach(msg => {
-                    const sourceId = msg.messageSource;
-                    
-                    if (!offlineMessages[sourceId]) {
-                        offlineMessages[sourceId] = [];
+                // 新的数据结构：{"message": {"2": [...], "3": [...]}, "status": true}
+                if (messageData && messageData.message) {
+                    // 遍历所有用户的消息
+                    for (const [userId, messages] of Object.entries(messageData.message)) {
+                        if (!offlineMessages[userId]) {
+                            offlineMessages[userId] = [];
+                        }
+                        
+                        // 将离线消息添加到离线消息列表
+                        messages.forEach(msg => {
+                            // 根据source判断消息方向
+                            // source: true 表示对方是发送方（显示在左侧）
+                            // source: false 表示当前用户是发送方（显示在右侧）
+                            offlineMessages[userId].push({
+                                message: msg.message,
+                                timestamp: msg.timestamp,
+                                isOffline: true,
+                                source: msg.source, // true: 对方发送, false: 自己发送
+                                senderId: msg.source ? userId : currentUserId
+                            });
+                        });
                     }
-                    
-                    offlineMessages[sourceId].push({
-                        message: msg.message,
-                        timestamp: msg.timestamp
-                    });
-                });
+                }
                 
                 // 在联系人列表上显示红点
                 showUnreadBadges();
             }
             
-            // ========== 显示未读红点（修改为头像右上角） ==========
+            // ========== 显示未读红点 ==========
             function showUnreadBadges() {
                 const contactItems = document.querySelectorAll('.contact-item');
                 
@@ -495,22 +649,49 @@
                 });
             }
             
-            // ========== 清除已读红点 ==========
-            function clearUnreadBadge(userId) {
-                delete offlineMessages[userId];
-                
-                const contactItems = document.querySelectorAll('.contact-item');
-                contactItems.forEach(item => {
-                    const onclickAttr = item.getAttribute('onclick');
-                    if (onclickAttr) {
-                        const match = onclickAttr.match(/selectContact\('(\d+)'/);
-                        if (match && match[1] === userId) {
-                            const badge = item.querySelector('.unread-badge');
-                            if (badge) {
-                                badge.remove();
+            // ========== 将离线消息合并到聊天历史 ==========
+            function mergeOfflineToHistory(userId) {
+                if (offlineMessages[userId] && offlineMessages[userId].length > 0) {
+                    // 将离线消息添加到聊天历史
+                    offlineMessages[userId].forEach(msg => {
+                        addMessageToHistory(userId, msg);
+                    });
+                    
+                    // 清除离线消息
+                    delete offlineMessages[userId];
+                    
+                    // 更新UI上的红点
+                    const contactItems = document.querySelectorAll('.contact-item');
+                    contactItems.forEach(item => {
+                        const onclickAttr = item.getAttribute('onclick');
+                        if (onclickAttr) {
+                            const match = onclickAttr.match(/selectContact\('(\d+)'/);
+                            if (match && match[1] === userId) {
+                                const badge = item.querySelector('.unread-badge');
+                                if (badge) {
+                                    badge.remove();
+                                }
                             }
                         }
-                    }
+                    });
+                    
+                    return true; // 有离线消息被合并
+                }
+                return false; // 没有离线消息
+            }
+            
+            // ========== 添加消息到聊天历史（适配新格式） ==========
+            function addMessageToHistory(userId, messageData) {
+                if (!chatHistory[userId]) {
+                    chatHistory[userId] = [];
+                }
+                
+                // 添加到历史记录
+                chatHistory[userId].push(messageData);
+                
+                // 按时间排序
+                chatHistory[userId].sort((a, b) => {
+                    return new Date(a.timestamp || 0) - new Date(b.timestamp || 0);
                 });
             }
             
@@ -573,12 +754,13 @@
                 chatHeader.textContent = '用户搜索';
                 
                 // 3. 修改空白聊天区域
-                const emptyChat = document.querySelector('.empty-chat');
                 emptyChat.innerHTML = `
                     <i class="fas fa-search chat-icon"></i>
                     <h2>搜索陌生人</h2>
                     <p>按用户名搜索并添加好友</p>
                 `;
+                emptyChat.style.display = 'flex';
+                chatMessages.style.display = 'none';
                 
                 // 4. 修改输入区域
                 messageInput.placeholder = '按用户名进行搜索';
@@ -683,7 +865,7 @@
             
             // ========== 显示搜索结果 ==========
             function displaySearchResults(users) {
-                const emptyChat = document.querySelector('.empty-chat');
+                emptyChat.innerHTML = '';
                 
                 if (users.length === 0) {
                     emptyChat.innerHTML = `
@@ -694,6 +876,8 @@
                             重新搜索
                         </button>
                     `;
+                    emptyChat.style.display = 'flex';
+                    chatMessages.style.display = 'none';
                     return;
                 }
                 
@@ -736,9 +920,11 @@
                 `;
                 
                 emptyChat.innerHTML = usersHtml;
+                emptyChat.style.display = 'block';
+                chatMessages.style.display = 'none';
             }
             
-            // ========== 更新联系人列表（修改为支持头像容器） ==========
+            // ========== 更新联系人列表 ==========
             function updateContactList(contacts) {
                 const contactListContainer = document.querySelector('.contact-list');
                 if (!contactListContainer) return;
@@ -780,7 +966,7 @@
                 `;
             }
             
-            // ========== 选择联系人（已增强，包含离线消息显示） ==========
+            // ========== 选择联系人（增强版） ==========
             window.selectContact = function(userId, userName) {
                 console.log(`选择了联系人: ${userName} (ID: ${userId})`);
                 
@@ -788,6 +974,9 @@
                 if (document.title === '微信 - 用户搜索') {
                     switchBackToWeChat();
                 }
+                
+                // 更新当前联系人
+                currentContact = { id: userId, name: userName };
                 
                 // 更新聊天头部
                 const chatHeader = document.querySelector('.chat-header');
@@ -802,65 +991,131 @@
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
                 
-                // 存储当前选中的联系人
-                window.currentContact = { id: userId, name: userName };
+                // 将离线消息合并到聊天历史（如果有）
+                const hasOfflineMessages = mergeOfflineToHistory(userId);
                 
-                // 显示聊天历史（包括离线消息）
-                displayChatHistory(userId, userName);
+                // 显示聊天历史（持久化显示，每次打开都能看到）
+                displayChatHistory(userId, userName, hasOfflineMessages);
             };
             
-            // ========== 显示聊天历史（包括离线消息） ==========
-            function displayChatHistory(userId, userName) {
-                const emptyChat = document.querySelector('.empty-chat');
+            // ========== 显示聊天历史（适配新格式） ==========
+            function displayChatHistory(userId, userName, hasNewOfflineMessages = false) {
+                // 隐藏空白聊天界面，显示聊天消息区域
+                emptyChat.style.display = 'none';
+                chatMessages.style.display = 'flex';
                 
-                let chatHtml = `
-                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-                        <div style="flex: 1; padding: 20px; overflow-y: auto;" id="message-container">
-                `;
+                // 清空聊天消息区域
+                chatMessages.innerHTML = '';
                 
-                // 检查是否有离线消息
-                if (offlineMessages[userId] && offlineMessages[userId].length > 0) {
-                    // 显示离线消息
-                    offlineMessages[userId].forEach(msg => {
-                        chatHtml += `
-                            <div style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
-                                <div style="max-width: 70%; background-color: white; color: #333; padding: 10px 15px; border-radius: 18px 18px 18px 4px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                                    ${msg.message}
-                                    <div style="text-align: right; font-size: 11px; margin-top: 5px; color: #999;">
-                                        ${msg.timestamp}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                // 获取该联系人的聊天历史
+                const history = chatHistory[userId];
+                
+                if (history && history.length > 0) {
+                    // 有历史消息，显示所有消息
+                    let hasOfflineMessagesShown = false;
+                    let lastDate = null;
+                    
+                    history.forEach((msg, index) => {
+                        // 检查是否是离线消息（并且是新接收的）
+                        const isNewOffline = msg.isOffline && index >= history.length - (offlineMessages[userId]?.length || 0);
+                        
+                        // 如果是新离线消息，并且还没有添加分隔线，则添加
+                        if (isNewOffline && hasNewOfflineMessages && !hasOfflineMessagesShown) {
+                            addOfflineDivider();
+                            hasOfflineMessagesShown = true;
+                        }
+                        
+                        // 添加时间分隔线（每天一个）
+                        const msgDate = msg.timestamp ? msg.timestamp.split(' ')[0] : null;
+                        if (msgDate && msgDate !== lastDate) {
+                            addTimeDivider(msgDate);
+                            lastDate = msgDate;
+                        }
+                        
+                        // 根据source判断消息方向
+                        // source: true 表示对方是发送方（显示在左侧）
+                        // source: false 表示当前用户是发送方（显示在右侧）
+                        const isFromOther = msg.source === true;  // 对方发送的消息
+                        
+                        addMessageToChat(msg.message, msg.timestamp, isFromOther, msg.isOffline);
                     });
                     
-                    // 添加提示
-                    chatHtml += `
-                        <div style="text-align: center; color: #999; padding: 10px 0; font-size: 12px; border-bottom: 1px solid #eee; margin-bottom: 15px;">
-                            以上是离线消息
-                        </div>
-                    `;
-                    
-                    // 清除已读的离线消息
-                    clearUnreadBadge(userId);
-                    
                 } else {
-                    // 没有离线消息，显示初始提示
-                    chatHtml += `
+                    // 没有历史消息，显示初始提示
+                    emptyChat.innerHTML = `
                         <div style="text-align: center; color: #999; padding: 40px 0;">
                             <i class="fas fa-comments" style="font-size: 40px; margin-bottom: 15px;"></i>
                             <h3>开始与 ${userName} 聊天</h3>
                             <p>发送第一条消息开始对话</p>
                         </div>
                     `;
+                    emptyChat.style.display = 'flex';
+                    chatMessages.style.display = 'none';
                 }
                 
-                chatHtml += `
+                // 滚动到底部
+                scrollToBottom();
+            }
+            
+            // ========== 添加消息到聊天界面 ==========
+            function addMessageToChat(message, timestamp, isFromOther, isOffline = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isFromOther ? 'message-other' : 'message-self';
+                
+                const timeStr = timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                messageDiv.innerHTML = `
+                    <div class="${isFromOther ? 'message-bubble-other' : 'message-bubble-self'}">
+                        ${message}
+                        <div class="message-time ${isFromOther ? 'message-time-other' : ''}">
+                            ${timeStr}
                         </div>
+                        ${isOffline ? `<div class="message-status ${isFromOther ? 'message-status-other' : ''}">[离线]</div>` : ''}
                     </div>
                 `;
                 
-                emptyChat.innerHTML = chatHtml;
+                chatMessages.appendChild(messageDiv);
+            }
+            
+            // ========== 添加离线消息分隔线 ==========
+            function addOfflineDivider() {
+                const divider = document.createElement('div');
+                divider.className = 'offline-divider';
+                divider.textContent = '以上是离线消息';
+                chatMessages.appendChild(divider);
+            }
+            
+            // ========== 添加时间分隔线 ==========
+            function addTimeDivider(dateStr) {
+                const divider = document.createElement('div');
+                divider.className = 'time-divider';
+                divider.innerHTML = `<span>${formatDate(dateStr)}</span>`;
+                chatMessages.appendChild(divider);
+            }
+            
+            // ========== 格式化日期 ==========
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                
+                const date = new Date(dateStr);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (date.toDateString() === today.toDateString()) {
+                    return '今天';
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    return '昨天';
+                } else {
+                    return dateStr;
+                }
+            }
+            
+            // ========== 滚动到底部 ==========
+            function scrollToBottom() {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
             }
             
             // ========== 添加好友功能 ==========
@@ -939,12 +1194,13 @@
                 sendBtn.disabled = true;
                 
                 // 恢复搜索界面
-                const emptyChat = document.querySelector('.empty-chat');
                 emptyChat.innerHTML = `
                     <i class="fas fa-search chat-icon"></i>
                     <h2>搜索陌生人</h2>
                     <p>按用户名搜索并添加好友</p>
                 `;
+                emptyChat.style.display = 'flex';
+                chatMessages.style.display = 'none';
             };
             
             // ========== 切换回微信模式 ==========
@@ -982,12 +1238,13 @@
                 chatHeader.textContent = '选择一个聊天开始对话';
                 
                 // 3. 恢复空白聊天区域
-                const emptyChat = document.querySelector('.empty-chat');
                 emptyChat.innerHTML = `
                     <i class="fas fa-comments chat-icon"></i>
                     <h2>开始聊天</h2>
                     <p>从左侧选择或添加好友开始聊天</p>
                 `;
+                emptyChat.style.display = 'flex';
+                chatMessages.style.display = 'none';
                 
                 // 4. 恢复输入区域
                 messageInput.placeholder = '选择一个联系人开始聊天...';
@@ -1038,19 +1295,40 @@
                 alert('搜索功能（模拟）\n这里可以集成实际的好友搜索逻辑');
             });
             
-            // ========== 消息发送功能 ==========
+            // ========== 消息发送功能（适配新格式） ==========
             const originalSendBtnClick = function() {
-                console.log('发送函数被调用，当前联系人:', window.currentContact);
+                console.log('发送函数被调用，当前联系人:', currentContact);
                 
-                if (!sendBtn.disabled && window.currentContact) {
+                if (!sendBtn.disabled && currentContact) {
                     const message = messageInput.value.trim();
                     console.log('要发送的消息:', message);
                     
                     if (message) {
                         // 获取当前选中的联系人
-                        const currentContact = window.currentContact;
+                        const contact = currentContact;
                         
-                        // 发送消息到服务器
+                        // 1. 先在本地显示消息（即时反馈）
+                        const messageData = {
+                            message: message,
+                            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                            source: false,  // false表示当前用户发送的消息（显示在右侧）
+                            senderId: currentUserId || 'self'
+                        };
+                        
+                        // 添加到聊天历史
+                        addMessageToHistory(contact.id, messageData);
+                        
+                        // 更新UI
+                        addMessageToChat(message, messageData.timestamp, false, false);
+                        
+                        // 清空输入框
+                        messageInput.value = '';
+                        messageInput.style.height = 'auto';
+                        
+                        // 滚动到底部
+                        scrollToBottom();
+                        
+                        // 2. 发送消息到服务器
                         fetch('/user/friend/send', {
                             method: 'POST',
                             headers: { 
@@ -1058,8 +1336,8 @@
                             },
                             body: JSON.stringify({
                                 action: 'send_message',
-                                targetUserId: currentContact.id,
-                                targetUsername: currentContact.name,
+                                targetUserId: contact.id,
+                                targetUsername: contact.name,
                                 message: message,
                                 timestamp: Date.now()
                             })
@@ -1077,20 +1355,14 @@
                             console.log('发送消息响应:', data);
                             
                             if (data && data.status == true) {
-                                // 发送成功，在界面上显示消息
-                                displayMessage(message, true); // true表示是自己发送的消息
-                                
-                                // 清空输入框
-                                messageInput.value = '';
-                                messageInput.style.height = 'auto';
-                                
+                                console.log('消息发送成功');
                             } else {
-                                alert(data.message || '消息发送失败');
+                                console.warn('消息发送可能失败:', data?.message);
                             }
                         })
                         .catch(error => {
                             console.error('发送消息失败:', error);
-                            alert('发送失败: ' + error.message);
+                            // 这里可以添加重试逻辑或错误提示
                         });
                         
                     } else {
@@ -1098,56 +1370,9 @@
                     }
                 } else {
                     alert('请先选择一个联系人开始聊天');
-                    console.log('发送失败原因: sendBtn.disabled=', sendBtn.disabled, 'currentContact=', window.currentContact);
+                    console.log('发送失败原因: sendBtn.disabled=', sendBtn.disabled, 'currentContact=', currentContact);
                 }
             };
-
-            // ========== 显示消息 ==========
-            function displayMessage(message, isMyMessage) {
-                const messageContainer = document.getElementById('message-container');
-                if (!messageContainer) return;
-                
-                // 移除初始提示
-                const initialPrompt = messageContainer.querySelector('div[style*="text-align: center"]');
-                if (initialPrompt) {
-                    initialPrompt.remove();
-                }
-                
-                // 创建消息元素
-                const messageDiv = document.createElement('div');
-                messageDiv.style.display = 'flex';
-                messageDiv.style.justifyContent = isMyMessage ? 'flex-end' : 'flex-start';
-                messageDiv.style.marginBottom = '15px';
-                
-                const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                if (isMyMessage) {
-                    // 自己发送的消息
-                    messageDiv.innerHTML = `
-                        <div style="max-width: 70%; background-color: #07c160; color: white; padding: 10px 15px; border-radius: 18px 18px 4px 18px; font-size: 14px;">
-                            ${message}
-                            <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.8;">
-                                ${timeString}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // 对方发送的消息
-                    messageDiv.innerHTML = `
-                        <div style="max-width: 70%; background-color: white; color: #333; padding: 10px 15px; border-radius: 18px 18px 18px 4px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            ${message}
-                            <div style="text-align: right; font-size: 11px; margin-top: 5px; color: #999;">
-                                ${timeString}
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                messageContainer.appendChild(messageDiv);
-                
-                // 滚动到底部
-                messageContainer.scrollTop = messageContainer.scrollHeight;
-            }
 
             // ========== 绑定发送按钮点击事件 ==========
             sendBtn.addEventListener('click', function() {
@@ -1164,8 +1389,74 @@
                 }
             });
 
+            // ========== 新增：加载聊天历史数据 ==========
+            // 在页面加载时，可以调用这个函数来加载初始聊天历史
+            function loadChatHistory() {
+                fetch('/user/offlinemessage', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        action: 'get_chat_history'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('收到聊天历史数据:', data);
+                    
+                    if (data && data.status === true && data.message) {
+                        // 处理聊天历史数据
+                        processChatHistory(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取聊天历史失败:', error);
+                });
+            }
+            
+            // ========== 处理聊天历史数据 ==========
+            function processChatHistory(messageData) {
+                // 清空现有的聊天历史
+                chatHistory = {};
+                
+                // 遍历所有用户的消息
+                for (const [userId, messages] of Object.entries(messageData)) {
+                    if (!chatHistory[userId]) {
+                        chatHistory[userId] = [];
+                    }
+                    
+                    // 将消息添加到聊天历史
+                    messages.forEach(msg => {
+                        chatHistory[userId].push({
+                            message: msg.message,
+                            timestamp: msg.timestamp,
+                            source: msg.source,
+                            senderId: msg.source ? userId : currentUserId
+                        });
+                    });
+                    
+                    // 按时间排序
+                    chatHistory[userId].sort((a, b) => {
+                        return new Date(a.timestamp || 0) - new Date(b.timestamp || 0);
+                    });
+                }
+                
+                console.log('聊天历史已加载:', chatHistory);
+            }
+            
+            // 页面加载完成后加载聊天历史
+            setTimeout(() => {
+                loadChatHistory();
+            }, 1000);
+
             console.log('微信界面已加载');
-            console.log('当前界面：简洁空白版，支持离线消息显示');
+            console.log('当前界面：支持滚动的聊天框');
         });
     </script>
 </body>

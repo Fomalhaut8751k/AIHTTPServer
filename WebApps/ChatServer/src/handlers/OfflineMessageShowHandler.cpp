@@ -27,18 +27,8 @@ void OfflineMessageShowHandler::handle(const http::HttpRequest& req, http::HttpR
         // 从数据库中查询自己的离线消息
         // 存放离线消息的json串
         json successResp;
-        successResp["message"] = json::array();
+        successResp["message"] = json::object();
         successResp["status"] = getOfflineMessage(userId, successResp);
-
-        // if (successResp["message"].is_array()) {
-        //     for (auto it = successResp["message"].begin(); 
-        //         it != successResp["message"].end(); ++it) {
-                
-        //         const auto& item = *it;
-        //         std::cout << item["message"] << std::endl;
-        //         std::cout << item["messageSource"] << std::endl;
-        //     }
-        // }
 
         std::string successBody = successResp.dump(4);
 
@@ -47,6 +37,7 @@ void OfflineMessageShowHandler::handle(const http::HttpRequest& req, http::HttpR
         resp->setContentType("application/json");
         resp->setContentLength(successBody.size());
         resp->setBody(successBody);
+
         return;
 
     }
@@ -63,33 +54,48 @@ void OfflineMessageShowHandler::handle(const http::HttpRequest& req, http::HttpR
         resp->setContentType("application/json");
         resp->setContentLength(failureBody.size());
         resp->setBody(failureBody);
+
         return;
     }
      
 }
 
-
+// 查找发送给我的
 bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, json& js)
 {
-    std::string sql = "SELECT * FROM offlineFriendMessage WHERE userid = ?";
-    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId);
+    std::string sql = "SELECT * FROM offlineFriendMessage WHERE userid = ? OR `from` = ?";
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, userId);
     if(!res){
         logger_->WARN("Query failed or no results");
         return false;
     }
+    // 找出所有以userId为发送方或者接收方的消息
     int index = 0;
     while(res->next())
     {
-        int messageSource = res->getInt("from");
+        int fromId = res->getInt("from");
+        int toId = res->getInt("userid");
+
         std::string message = res->getString("message");
         std::string timestamp = res->getString("created_at");
-        js["message"][index++] = {
-            {"messageSource", messageSource}, 
-            {"message", message},
-            {"timestamp", timestamp}
-        };
+        int OtherId = (fromId == userId ? toId : fromId);  // 找到对面的Id
+        std::string OtherIdStr = std::to_string(OtherId);
+
+        if(js["message"].find(OtherIdStr) == js["message"].end()){  // 还不存在
+            js["message"][OtherIdStr] = js.array();
+        }
+        js["message"][OtherIdStr].push_back(
+            {
+                {"source", OtherId == fromId},  // 判断对方是否是发送方
+                {"message", message},
+                {"timestamp", timestamp}
+            }
+        );
     }
-    /*
+    return true;
+}
+
+/*
         {
             "status": true,
             "message": [
@@ -106,9 +112,29 @@ bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, json& js)
             ]
         }
     */
-    // 读取后的离线消息要删除
-    sql = "DELETE FROM offlineFriendMessage WHERE userid = ?";
-    int affect = mysqlUtil_.executeUpdate(sql, userId);
 
+/*
+bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, json& js)
+{
+    std::string sql = "SELECT from, message, create_at FROM offlineFriendMessage WHERE userid = ?";
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId);
+    if(!res){
+        logger_->WARN("Query failed or no results");
+        return false;
+    }
+    int index = 0;
+    while(res->next())
+    {
+        int messageSource = res->getInt("from");
+        std::string message = res->getString("message");
+        std::string timestamp = res->getString("created_at");
+        js["message_from"][index++] = {
+            {"messageSource", messageSource}, 
+            {"message", message},
+            {"timestamp", timestamp}
+        };
+    }
     return true;
 }
+
+*/

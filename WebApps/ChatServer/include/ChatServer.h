@@ -74,7 +74,8 @@ private:
     http::HttpServer httpServer_;
     http::MysqlUtil mysqlUtil_;
 
-    std::unordered_map<int, bool> onlineUsers_;
+    // std::unordered_map<int, bool> onlineUsers_;
+    std::unordered_map<int, int> onlineUsers_;  // 多种状态
     std::mutex mutexForOnlineUsers_;
 };
 
