@@ -487,8 +487,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const messageInput = document.getElementById('message-input');
-            const sendBtn = document.getElementById('send-btn');
+            let messageInput = document.getElementById('message-input');
+            let sendBtn = document.getElementById('send-btn');
             const emptyChat = document.getElementById('empty-chat');
             const chatMessages = document.getElementById('chat-messages');
             
@@ -772,10 +772,22 @@
                 sendBtn.textContent = '查找';
                 sendBtn.disabled = true;
                 
-                // 重新绑定按钮点击事件
-                sendBtn.onclick = function() {
+                // 重要：先移除原来的事件监听器，然后添加新的事件
+                // 创建一个新的按钮元素来完全替换事件监听
+                const oldSendBtn = sendBtn;
+                const newSendBtn = sendBtn.cloneNode(true);
+                sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+                
+                // 重新获取新的按钮引用
+                sendBtn = document.getElementById('send-btn');
+                
+                // 添加新的点击事件监听器
+                sendBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('查找按钮被点击');
                     performSearch();
-                };
+                });
                 
                 // 6. 修改左侧边栏的微信图标
                 const wechatIcon = document.querySelector('.fa-comment-alt');
@@ -861,6 +873,8 @@
                     
                     alert('搜索失败，请稍后重试');
                 });
+                
+                return false; // 防止默认行为和事件冒泡
             }
             
             // ========== 显示搜索结果 ==========
@@ -1255,7 +1269,22 @@
                 // 5. 恢复按钮
                 sendBtn.textContent = '发送';
                 sendBtn.disabled = true;
-                sendBtn.onclick = null;
+                
+                // 重要：重置按钮的事件监听器
+                const oldSendBtn = sendBtn;
+                const newSendBtn = sendBtn.cloneNode(true);
+                sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+                
+                // 重新获取新的按钮引用
+                sendBtn = document.getElementById('send-btn');
+                
+                // 重新绑定发送消息的事件
+                sendBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('发送按钮被点击');
+                    originalSendBtnClick();
+                });
                 
                 // 6. 恢复微信图标
                 const searchIcon = document.querySelector('.fa-search');

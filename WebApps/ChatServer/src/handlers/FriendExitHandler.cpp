@@ -2,5 +2,5 @@
 
 void FriendExitHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
 {
-
+    std::cout << "pdcHelloWorld" << std::endl;
 }
