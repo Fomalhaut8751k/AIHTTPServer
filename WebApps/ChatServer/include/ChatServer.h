@@ -15,19 +15,31 @@
 class EntryHandler;
 class LoginHandler;
 class LogoutHandler;
+
 class RegisterHandler;
+
 class UserHandler;
+
 class FriendHandler;
 class FriendSendHandler;
-class FriendExitHandler;
+
 class GroupHandler;
 class GroupSendHandler;
 class GroupExitHandler;
-class SearchHandler;
+
 class SearchUserHandler;
+class SearchUserExistHandler;
 class FriendAddHandler;
 class GetFriendListHandler;
+
+class SearchAIRobotHandler;
+class SearchAIRobotExistHandler;
+class AIRobotAddHandler;
+class GetAIRobotListHandler;
+
 class OfflineMessageShowHandler;
+
+
 
 class ChatServer
 {
@@ -65,10 +77,17 @@ private:
     friend class GroupHandler;
     friend class GroupSendHandler;
     friend class GroupExitHandler;
-    friend class SearchHandler;
+
     friend class SearchUserHandler;
+    friend class SearchUserExistHandler;
     friend class FriendAddHandler;
     friend class GetFriendListHandler;
+
+    friend class SearchAIRobotHandler;
+    friend class SearchAIRobotExistHandler;
+    friend class AIRobotAddHandler;
+    friend class GetAIRobotListHandler;
+
     friend class OfflineMessageShowHandler;
     
     http::HttpServer httpServer_;

@@ -341,4 +341,21 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
 <br>
 
-    
+- 创建一张表，存放机器人的`Id`, `name` 以及 `API-Key`。
+
+- 再创建一张表，存在用户和机器人的“好友”关系。这个关系是单向的，添加的时候只有(用户id, 机器人id)，没有(机器人id，用户id)。
+
+    ![](images/aitable.png)
+
+
+<br>
+
+17. 2025.12.25
+
+    实现了携带不同`api-key`的AI聊天机器人的投放，以及用户自行添加AI机器人到列表中
+
+    ![](images/airobotadd1.png)
+
+    ![](images/airobotadd2.png)
+
+

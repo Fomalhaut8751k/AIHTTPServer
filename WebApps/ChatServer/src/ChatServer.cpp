@@ -5,7 +5,6 @@
 #include "../../../HttpServer/include/http/HttpServer.h"
 
 #include "../include/handlers/EntryHandler.h"
-#include "../include/handlers/FriendExitHandler.h"
 #include "../include/handlers/FriendHandler.h"
 #include "../include/handlers/FriendSendHandler.h"
 #include "../include/handlers/GroupExitHandler.h"
@@ -15,10 +14,17 @@
 #include "../include/handlers/LogoutHandler.h"
 #include "../include/handlers/RegisterHandler.h"
 #include "../include/handlers/UserHandler.h"
-#include "../include/handlers/SearchHandler.h"
+
 #include "../include/handlers/SearchUserHandler.h"
+#include "../include/handlers/SearchUserExistHandler.h"
 #include "../include/handlers/FriendAddHandler.h"
 #include "../include/handlers/GetFriendListHandler.h"
+
+#include "../include/handlers/SearchAIRobotHandler.h"
+#include "../include/handlers/SearchAIRobotExistHandler.h"
+#include "../include/handlers/AIRobotAddHandler.h"
+#include "../include/handlers/GetAIRobotListHandler.h"
+
 #include "../include/handlers/OfflineMessageShowHandler.h"
 
 using namespace http;
@@ -82,21 +88,32 @@ void ChatServer::initializeRouter()
     // 向好友发送聊天消息
     httpServer_.Post("/user/friend/send", std::make_shared<FriendSendHandler>(this));
     // 退出好友聊天
-    httpServer_.Get("/user/friend/exit", std::make_shared<FriendExitHandler>(this));
+    // httpServer_.Get("/user/friend/exit", std::make_shared<FriendExitHandler>(this));
     // 群聊聊天
     httpServer_.Get("/user/group", std::make_shared<GroupHandler>(this));
     // 向群聊发送聊天消息
     httpServer_.Post("/user/group/send", std::make_shared<GroupSendHandler>(this));
     // 退出群聊聊天
     httpServer_.Get("/user/group/exit", std::make_shared<GroupExitHandler>(this));
+
     // 陌生人查找
-    httpServer_.Post("/user/search", std::make_shared<SearchHandler>(this));
+    httpServer_.Post("/user/search", std::make_shared<SearchUserHandler>(this));
     // 查询陌生人是否存在
-    httpServer_.Post("/user/search/exist", std::make_shared<SearchUserHandler>(this));
+    httpServer_.Post("/user/search/exist", std::make_shared<SearchUserExistHandler>(this));
     // 确认添加好友
     httpServer_.Post("/user/search/add", std::make_shared<FriendAddHandler>(this));
     // 返回好友列表
     httpServer_.Post("/user/friendlist", std::make_shared<GetFriendListHandler>(this));
+    
+    // AI机器人查找
+    httpServer_.Post("/user/aisearch", std::make_shared<SearchAIRobotHandler>(this));
+    // 查询AI机器人是否存在
+    httpServer_.Post("/user/aisearch/exist", std::make_shared<SearchAIRobotExistHandler>(this));
+    // 确认添加机器人
+    httpServer_.Post("/user/aisearch/add", std::make_shared<AIRobotAddHandler>(this));
+    // 返回机器人列表
+    httpServer_.Post("/user/airobotlist", std::make_shared<GetAIRobotListHandler>(this));
+
     // 加载离线消息
     httpServer_.Post("/user/offlinemessage", std::make_shared<OfflineMessageShowHandler>(this));
 }

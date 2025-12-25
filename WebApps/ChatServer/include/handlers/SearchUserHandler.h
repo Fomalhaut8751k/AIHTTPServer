@@ -13,12 +13,10 @@ public:
     void handle(const http::HttpRequest& req, http::HttpResponse* resq) override;
 
 private:
-    bool isUserExist(const std::string& username);
-    int queryUserId(const std::string &username);
-    
+    // bool isUserExist(const std::string& username);
+
     ChatServer* server_;
     http::MysqlUtil mysqlUtil_;
 };
-
 
 #endif
