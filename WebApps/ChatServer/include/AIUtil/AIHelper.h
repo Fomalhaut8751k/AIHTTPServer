@@ -22,14 +22,21 @@ public:
     void setModel(const std::string& modelName);
 
     // 添加一条消息
-    void addMessage(int userId, const std::string& userName, bool is_user, const std::string& userInput);
+    void addMessage(int userId, 
+                    // const std::string& userName, 
+                    bool is_user, 
+                    const std::string& userInput
+                   );
 
     // 恢复一条消息
     void restoreMessage(const std::string& userInput, long long ms);
 
     // 发送聊天消息，返回AI的响应内容
     // messages: [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}]
-    std::string chat(int userId, std::string userName);
+    // std::string chat(int userId, std::string userName);
+
+    // std::string chat(int userId);
+    std::pair<std::string, int64_t> chat(int userId);
 
     // 可选：发送自定义的请求体
     json request(const json& payload);

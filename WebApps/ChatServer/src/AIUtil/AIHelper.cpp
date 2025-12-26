@@ -19,7 +19,7 @@ void AIHelper::setModel(const std::string& modelName)
 
 // 添加一条用户消息
 void AIHelper::addMessage(int userId, 
-                          const std::string& userName, 
+                        //   const std::string& userName, 
                           bool is_user,
                           const std::string& userInput)
 {
@@ -28,7 +28,7 @@ void AIHelper::addMessage(int userId,
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     messages.push_back({userInput, ms});
     // 消息队列异步入库
-    pushMessageToMysql(userId, userName, is_user, userInput, ms);
+    // pushMessageToMysql(userId, userName, is_user, userInput, ms);
 }
 
 void AIHelper::restoreMessage(const std::string& userInput, long long ms)
@@ -37,7 +37,8 @@ void AIHelper::restoreMessage(const std::string& userInput, long long ms)
 }
 
 // 发送聊天消息
-std::string AIHelper::chat(int userId, std::string userName)
+// std::string AIHelper::chat(int userId, std::string userName)
+std::pair<std::string, int64_t> AIHelper::chat(int userId)
 {
     // 构造 payload
     json payload;
@@ -67,15 +68,18 @@ std::string AIHelper::chat(int userId, std::string userName)
     // 执行请求
     json response = executeCurl(payload);
 
+    std::cerr << response << std::endl;
+
     if(response.contains("choices") && !response["choices"].empty())
     {
-        std::string answer = response["choice"][0]["message"]["content"];
+        std::string answer = response["choices"][0]["message"]["content"];
+        int64_t timestamp = response["created"];
         // 保存AI回复
-        addMessage(userId, userName, false, answer);
-        return answer;
+        // addMessage(userId, userName, false, answer);
+        return {answer, timestamp};
     }
 
-    return "[Error] 无法解析响应";
+    return {"[Error] 无法解析响应", -1};
 }
 
 // 发送自定义的请求体

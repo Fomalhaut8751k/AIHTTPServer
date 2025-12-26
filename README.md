@@ -358,4 +358,18 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
     ![](images/airobotadd2.png)
 
+<br>
 
+- 再创建一张表，记录用户和对应`AI`的聊天记录
+
+    因为用户`ID`和机器人的`ID`是独立的，因此不能像`offlineFriendMessage`一样仅仅用发送方和接收方来区分。
+
+    ![](images/offlineAIRobotMessage.png)
+
+<br>
+
+18. 2025.12.26
+
+    实现了简单的AI聊天(阿里云百炼)
+
+    ![](images/aichat.png)

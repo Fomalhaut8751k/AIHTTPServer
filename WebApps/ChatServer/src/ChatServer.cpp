@@ -5,8 +5,7 @@
 #include "../../../HttpServer/include/http/HttpServer.h"
 
 #include "../include/handlers/EntryHandler.h"
-#include "../include/handlers/FriendHandler.h"
-#include "../include/handlers/FriendSendHandler.h"
+
 #include "../include/handlers/GroupExitHandler.h"
 #include "../include/handlers/GroupHandler.h"
 #include "../include/handlers/GroupSendHandler.h"
@@ -19,11 +18,13 @@
 #include "../include/handlers/SearchUserExistHandler.h"
 #include "../include/handlers/FriendAddHandler.h"
 #include "../include/handlers/GetFriendListHandler.h"
+#include "../include/handlers/FriendSendHandler.h"
 
 #include "../include/handlers/SearchAIRobotHandler.h"
 #include "../include/handlers/SearchAIRobotExistHandler.h"
 #include "../include/handlers/AIRobotAddHandler.h"
 #include "../include/handlers/GetAIRobotListHandler.h"
+#include "../include/handlers/AIRobotSendHandler.h"
 
 #include "../include/handlers/OfflineMessageShowHandler.h"
 
@@ -81,14 +82,10 @@ void ChatServer::initializeRouter()
     httpServer_.Post("/register", std::make_shared<RegisterHandler>(this));
     // 登出
     httpServer_.Post("/user/logout", std::make_shared<LoginHandler>(this));
+    
     // 用户界面
     httpServer_.Get("/user", std::make_shared<UserHandler>(this));
-    // 好友聊天
-    httpServer_.Get("/user/friend", std::make_shared<FriendHandler>(this));
-    // 向好友发送聊天消息
-    httpServer_.Post("/user/friend/send", std::make_shared<FriendSendHandler>(this));
-    // 退出好友聊天
-    // httpServer_.Get("/user/friend/exit", std::make_shared<FriendExitHandler>(this));
+
     // 群聊聊天
     httpServer_.Get("/user/group", std::make_shared<GroupHandler>(this));
     // 向群聊发送聊天消息
@@ -104,7 +101,11 @@ void ChatServer::initializeRouter()
     httpServer_.Post("/user/search/add", std::make_shared<FriendAddHandler>(this));
     // 返回好友列表
     httpServer_.Post("/user/friendlist", std::make_shared<GetFriendListHandler>(this));
+
+    // 向好友发送聊天消息
+    httpServer_.Post("/user/friend/send", std::make_shared<FriendSendHandler>(this));
     
+
     // AI机器人查找
     httpServer_.Post("/user/aisearch", std::make_shared<SearchAIRobotHandler>(this));
     // 查询AI机器人是否存在
@@ -113,6 +114,10 @@ void ChatServer::initializeRouter()
     httpServer_.Post("/user/aisearch/add", std::make_shared<AIRobotAddHandler>(this));
     // 返回机器人列表
     httpServer_.Post("/user/airobotlist", std::make_shared<GetAIRobotListHandler>(this));
+
+    // AI聊天
+    httpServer_.Post("/user/airobot/send", std::make_shared<AIRobotSendHandler>(this));
+    
 
     // 加载离线消息
     httpServer_.Post("/user/offlinemessage", std::make_shared<OfflineMessageShowHandler>(this));

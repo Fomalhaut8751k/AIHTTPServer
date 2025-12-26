@@ -12,6 +12,8 @@
 #include "../../../HttpServer/include/utils/FileUtil.h"
 #include "../../../HttpServer/include/utils/JsonUtil.h"
 
+#include "AIUtil/AIHelper.h"
+
 class EntryHandler;
 class LoginHandler;
 class LogoutHandler;
@@ -20,25 +22,25 @@ class RegisterHandler;
 
 class UserHandler;
 
-class FriendHandler;
-class FriendSendHandler;
-
-class GroupHandler;
-class GroupSendHandler;
-class GroupExitHandler;
-
 class SearchUserHandler;
 class SearchUserExistHandler;
 class FriendAddHandler;
 class GetFriendListHandler;
+
+class FriendSendHandler;
 
 class SearchAIRobotHandler;
 class SearchAIRobotExistHandler;
 class AIRobotAddHandler;
 class GetAIRobotListHandler;
 
-class OfflineMessageShowHandler;
+class AIRobotSendHandler;
 
+class GroupHandler;
+class GroupSendHandler;
+class GroupExitHandler;
+
+class OfflineMessageShowHandler;
 
 
 class ChatServer
@@ -70,10 +72,11 @@ private:
     friend class LoginHandler;
     friend class LogoutHandler;
     friend class RegisterHandler;
+
     friend class UserHandler;
-    friend class FriendHandler;
-    friend class FriendSendHandler;
+    
     friend class FriendExitHandler;
+
     friend class GroupHandler;
     friend class GroupSendHandler;
     friend class GroupExitHandler;
@@ -82,11 +85,13 @@ private:
     friend class SearchUserExistHandler;
     friend class FriendAddHandler;
     friend class GetFriendListHandler;
+    friend class FriendSendHandler;
 
     friend class SearchAIRobotHandler;
     friend class SearchAIRobotExistHandler;
     friend class AIRobotAddHandler;
     friend class GetAIRobotListHandler;
+    friend class AIRobotSendHandler;
 
     friend class OfflineMessageShowHandler;
     

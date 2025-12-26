@@ -10,6 +10,7 @@ public:
     explicit FriendSendHandler(ChatServer* server): server_(server){}
 
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
+    
 private:
     bool writeIntoTargetOfflineMessage(const int& myId, const int& targetId, const std::string& message, int64_t timestamp);
 

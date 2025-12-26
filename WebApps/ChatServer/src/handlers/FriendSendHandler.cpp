@@ -35,7 +35,7 @@ void FriendSendHandler::handle(const http::HttpRequest& req, http::HttpResponse*
 
         int64_t timestamp = parsed["timestamp"].get<int64_t>();  
 
-        // 发送给好友
+        // 发送给好友（看似发送，实则写入数据库...）
         bool res = writeIntoTargetOfflineMessage(userId, targetUserId, message, timestamp);
         if(res) // 如果写入数据库成功
         {
