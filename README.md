@@ -373,3 +373,26 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     实现了简单的AI聊天(阿里云百炼)
 
     ![](images/aichat.png)
+
+<br>
+
+19. 2025.12.27
+
+    实现了AI聊天消息到数据库的记录
+
+    ![](images/aihistory.png)
+
+- 问题七
+
+    AI与用户的聊天记录写入数据库时失败了，通过直接使用mysql语句插入数据是没有问题的。因此问题出在代码这边，通过gdb调试定位到：
+    
+    ```cpp
+    std::unique_ptr<sql::PreparedStatement> stmt(conn_->prepareStatement(sql));
+    bindParams(stmt.get(), 1, std::forward<Args>(args)...);
+    return stmt->executeQuery();
+    ```
+
+    最终发现是ai回答问题偶尔会带几个表情包，这些特殊字符编码出现问题。
+
+    ![](images/symbolproblem.png)
+

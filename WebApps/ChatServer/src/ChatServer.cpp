@@ -27,6 +27,7 @@
 #include "../include/handlers/AIRobotSendHandler.h"
 
 #include "../include/handlers/OfflineMessageShowHandler.h"
+#include "../include/handlers/OfflineAIMessageShowHandler.h"
 
 using namespace http;
 
@@ -119,8 +120,11 @@ void ChatServer::initializeRouter()
     httpServer_.Post("/user/airobot/send", std::make_shared<AIRobotSendHandler>(this));
     
 
-    // 加载离线消息
+    // 加载好友离线消息
     httpServer_.Post("/user/offlinemessage", std::make_shared<OfflineMessageShowHandler>(this));
+    
+    // 加载AI离线消息
+    httpServer_.Post("/user/offlineaimessage", std::make_shared<OfflineAIMessageShowHandler>(this));
 }
 
 void ChatServer::initializeMiddleWare()

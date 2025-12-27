@@ -41,6 +41,7 @@ class GroupSendHandler;
 class GroupExitHandler;
 
 class OfflineMessageShowHandler;
+class OfflineAIMessageShowHandler;
 
 
 class ChatServer
@@ -94,6 +95,7 @@ private:
     friend class AIRobotSendHandler;
 
     friend class OfflineMessageShowHandler;
+    friend class OfflineAIMessageShowHandler;
     
     http::HttpServer httpServer_;
     http::MysqlUtil mysqlUtil_;

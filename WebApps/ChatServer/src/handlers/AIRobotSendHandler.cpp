@@ -55,11 +55,11 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
             (gdb) p answerTimestamp
             $2 = 1766733967
         */
-        std::string messageForUser = "user";
-        std::string messageForRobot = "robot";
+        // std::string messageForUser = "user";
+        // std::string messageForRobot = "robot";
 
-        // writeIntoTargetOfflineMessage(userId, targetAIRobotId, question, messageForUser, questionTimestamp);
-        // writeIntoTargetOfflineMessage(userId, targetAIRobotId, answer, messageForRobot, answerTimestamp);
+        writeIntoTargetOfflineMessage(userId, targetAIRobotId, question, "user", questionTimestamp);
+        writeIntoTargetOfflineMessage(userId, targetAIRobotId, answer, "robot", answerTimestamp);
 
         json successResp;
         successResp["status"] = true;
@@ -122,8 +122,9 @@ std::pair<std::string, int64_t> AIRobotSendHandler::aiRobotResponse(const int& u
 bool AIRobotSendHandler::writeIntoTargetOfflineMessage(const int& userId, const int& robotId,
                             const std::string& message, const std::string& source, int64_t timestamp)
 {
-    std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source) VALUES (?, ?, ?, ?)";
-
-    int affectedRows = mysqlUtil_.executeUpdate(sql, userId, robotId, message, source);
+    std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))";
+    int affectedRows = mysqlUtil_.executeUpdate(sql, userId, robotId, message, source, timestamp);
+    // std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (1, 1, '你好呀！✨ 很高兴见到你！今天过得怎么样呀？希望你度过了愉快的一天。我随时准备好陪你聊天、帮你解决问题，或者就这样轻松愉快地闲聊一会儿。有什么想跟我分享的吗？ 🌟', 'user', FROM_UNIXTIME(1766820845))" ;
+    // int affectedRows = mysqlUtil_.executeUpdate(sql);
     return affectedRows > 0;
 }

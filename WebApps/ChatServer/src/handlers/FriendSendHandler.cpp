@@ -26,10 +26,10 @@ void FriendSendHandler::handle(const http::HttpRequest& req, http::HttpResponse*
         json parsed = json::parse(req.getBody());
         std::string action = parsed["action"];
         
-        std::string strTargetUserId = parsed["targetUserId"];  
+        std::string strTargetUserId = parsed["targetId"];  
         int targetUserId = std::stoi(strTargetUserId);  // 接收方的id
 
-        std::string strTargetUserName = parsed["targetUsername"];  // 接收方的名称
+        std::string strTargetUserName = parsed["targetName"];  // 接收方的名称
         
         std::string message = parsed["message"];  // 发送给对方的消息
 
