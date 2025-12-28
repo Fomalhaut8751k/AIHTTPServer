@@ -21,14 +21,17 @@ void OfflineMessageShowHandler::handle(const http::HttpRequest& req, http::HttpR
             );
             return;
         }
+        json parsed = json::parse(req.getBody());
 
         // 获取用户信息
         int userId = std::stoi(session->getValue("userId"));
-        // 从数据库中查询自己的离线消息
+        std::string friendIdStr = parsed["targetId"];
+        int friendId = std::stoi(friendIdStr);
+        
         // 存放离线消息的json串
         json successResp;
-        successResp["message"] = json::object();
-        successResp["status"] = getOfflineMessage(userId, successResp);
+        successResp["message"] = json::array();
+        successResp["status"] = getOfflineMessage(userId, friendId, successResp);
 
         std::string successBody = successResp.dump(4);
 
@@ -57,14 +60,12 @@ void OfflineMessageShowHandler::handle(const http::HttpRequest& req, http::HttpR
 
         return;
     }
-     
 }
 
-// 查找发送给我的
-bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, json& js)
+bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, const int& friendId, json& js)
 {
-    std::string sql = "SELECT * FROM offlineFriendMessage WHERE userid = ? OR `from` = ?";
-    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, userId);
+    std::string sql = "SELECT * FROM offlineFriendMessage WHERE ((userid = ? AND `from` = ?) OR (userid = ? AND `from` = ?)) ORDER BY created_at"; // 可以按时间排序
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, friendId, friendId, userId);
     if(!res){
         logger_->WARN("Query failed or no results");
         return false;
@@ -81,17 +82,15 @@ bool OfflineMessageShowHandler::getOfflineMessage(const int& userId, json& js)
         int OtherId = (fromId == userId ? toId : fromId);  // 找到对面的Id
         std::string OtherIdStr = std::to_string(OtherId);
 
-        if(js["message"].find(OtherIdStr) == js["message"].end()){  // 还不存在
-            js["message"][OtherIdStr] = js.array();
-        }
-        js["message"][OtherIdStr].push_back(
+        js["message"].push_back(
             {
-                {"source", OtherId == fromId},  // 判断对方是否是发送方
+                {"source", OtherId == fromId ? "friend" : "user"},  // 判断对方是否是发送方
                 {"message", message},
                 {"timestamp", timestamp}
             }
         );
     }
+
     return true;
 }
 

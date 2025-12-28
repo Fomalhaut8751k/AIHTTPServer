@@ -396,3 +396,14 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
     ![](images/symbolproblem.png)
 
+<br>
+
+20. 2025.12.28
+
+    修改了获取离线消息的逻辑：从登录时直接加载所有好友的聊天消息，改为点击左侧相应的好友聊天框时加载对应好友的聊天消息。
+
+    ```python
+    # cos 慕容垂的 ai, 打着胜利主义的旗帜，实则内心的失败主义无比坚定，早就在准备光复大燕了
+    ```
+    ![](images/aichat2.png)
+

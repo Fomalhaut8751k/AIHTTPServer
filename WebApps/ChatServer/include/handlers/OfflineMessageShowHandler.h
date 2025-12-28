@@ -11,7 +11,7 @@ public:
 
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
 private:
-    bool getOfflineMessage(const int& userId, json& js);
+    bool getOfflineMessage(const int& userId, const int& friendId, json& js);
 
     ChatServer* server_;
     http::MysqlUtil mysqlUtil_;

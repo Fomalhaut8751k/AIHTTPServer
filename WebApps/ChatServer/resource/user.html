@@ -868,14 +868,17 @@
                         // 将离线消息添加到离线消息列表
                         messages.forEach(msg => {
                             // 根据source判断消息方向
-                            // source: true 表示对方是发送方（显示在左侧）
-                            // source: false 表示当前用户是发送方（显示在右侧）
+                            // source为"user"时，表示当前用户发送的消息（显示在右侧）
+                            // source为"friend"时，表示好友发送的消息（显示在左侧）
+                            const isFromOther = msg.source === 'friend';
+                            
                             offlineMessages[userId].push({
                                 message: msg.message,
                                 timestamp: msg.timestamp,
                                 isOffline: true,
-                                source: msg.source, // true: 对方发送, false: 自己发送
-                                senderId: msg.source ? userId : currentUserId
+                                source: msg.source, // 'user' 或 'friend'
+                                senderId: isFromOther ? userId : currentUserId,
+                                isFromOther: isFromOther
                             });
                         });
                     }
@@ -1262,7 +1265,7 @@
                         const avatarText = contact.name && contact.name.length > 0 ? contact.name.charAt(0) : '?';
                         
                         contactsHtml += `
-                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0e0e0; cursor: pointer; transition: background-color 0.2s;" 
+                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background-color 0.2s;" 
                                  onclick="selectContact('${contact.id}', '${contact.name}', true)"
                                  onmouseover="this.style.backgroundColor='#f9f9f9'"
                                  onmouseout="this.style.backgroundColor='white'">
@@ -1330,7 +1333,7 @@
                 loadChatHistory(userId, isAI, userName, hasOfflineMessages);
             };
             
-            // ========== 加载聊天记录（新增函数）==========
+            // ========== 加载聊天记录（新增函数，修复好友消息方向判断）==========
             function loadChatHistory(contactId, isAI, contactName, hasNewOfflineMessages = false) {
                 // 确定请求的端点
                 const endpoint = isAI ? '/user/offlineaimessage' : '/user/offlinemessage';
@@ -1393,17 +1396,24 @@
                                 lastDate = msgDate;
                             }
                             
-                            // 根据source判断消息方向
-                            // source为"user"表示消息是用户（当前用户）发送的，显示在右侧
-                            // source为"robot"表示消息是AI或对方发送的，显示在左侧
-                            const isFromOther = msg.source === 'robot' || msg.source === 'user' && isAI;
+                            // 根据联系人类型和source判断消息方向
+                            let isFromOther = false;
+                            
+                            if (isAI) {
+                                // AI聊天记录：source为"user"是用户消息（显示在右侧），source为"robot"是AI消息（显示在左侧）
+                                isFromOther = msg.source === 'robot';
+                            } else {
+                                // 好友聊天记录：source为"user"是用户消息（显示在右侧），source为"friend"是好友消息（显示在左侧）
+                                isFromOther = msg.source === 'friend';
+                            }
                             
                             // 添加到聊天历史
                             chatHistory[contactId].push({
                                 message: msg.message,
                                 timestamp: msg.timestamp,
-                                source: isFromOther, // true: 对方发送, false: 自己发送
+                                source: msg.source, // 'user' 或 'friend'（好友）/ 'robot'（AI）
                                 senderId: isFromOther ? contactId : currentUserId,
+                                isFromOther: isFromOther,
                                 isAI: isAI
                             });
                             
@@ -1448,7 +1458,7 @@
                 
                 const timeStr = timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
-                // 创建AI消息的指示器
+                // 创建AI消息的指示器（仅当是AI发送的消息时显示）
                 const aiIndicator = isAI && isFromOther ? '<span class="ai-message-indicator">AI</span>' : '';
                 
                 messageDiv.innerHTML = `
@@ -1754,8 +1764,10 @@
                         const messageData = {
                             message: message,
                             timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                            source: false,  // false表示当前用户发送的消息（显示在右侧）
-                            senderId: currentUserId || 'self'
+                            source: 'user',  // 'user'表示当前用户发送的消息（显示在右侧）
+                            senderId: currentUserId || 'self',
+                            isFromOther: false,
+                            isAI: isAI
                         };
                         
                         // 添加到聊天历史
@@ -1836,8 +1848,9 @@
                                     const aiMessageData = {
                                         message: aiResponse,
                                         timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                                        source: true,  // true表示AI发送的消息（显示在左侧）
+                                        source: 'robot',  // 'robot'表示AI发送的消息（显示在左侧）
                                         senderId: contact.id,
+                                        isFromOther: true,
                                         isAI: true
                                     };
                                     
@@ -1862,8 +1875,9 @@
                                     const errorMessageData = {
                                         message: '抱歉，AI暂时无法响应。请稍后再试。',
                                         timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                                        source: true,
+                                        source: 'robot',
                                         senderId: contact.id,
+                                        isFromOther: true,
                                         isAI: true,
                                         isError: true
                                     };
@@ -1889,8 +1903,9 @@
                                 const errorMessageData = {
                                     message: '网络错误，请检查连接后重试。',
                                     timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                                    source: true,
+                                    source: 'robot',
                                     senderId: contact.id,
+                                    isFromOther: true,
                                     isAI: true,
                                     isError: true
                                 };
@@ -1940,6 +1955,7 @@
             console.log('微信界面已加载');
             console.log('新增功能：支持同时加载好友列表和AI机器人列表');
             console.log('新增功能：支持加载AI聊天记录');
+            console.log('修复：好友聊天记录方向判断 - source: "user" 显示在右侧，source: "friend" 显示在左侧');
         });
     </script>
 </body>

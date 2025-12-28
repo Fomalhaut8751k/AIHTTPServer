@@ -25,12 +25,20 @@ void OfflineAIMessageShowHandler::handle(const http::HttpRequest& req, http::Htt
 
         // 获取用户信息
         int userId = std::stoi(session->getValue("userId"));
-        std::string robotIdStr = parsed["robotId"];
+        std::string robotIdStr = parsed["targetId"];
         int robotId = std::stoi(robotIdStr);
 
         json successResp;
         successResp["message"] = json::array();
         successResp["status"] = getOfflineMessage(userId, robotId, successResp);
+
+        std::string successBody = successResp.dump(4);
+
+        resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");   // 版本，状态码，...
+        resp->setCloseConnection(false);
+        resp->setContentType("application/json");
+        resp->setContentLength(successBody.size());
+        resp->setBody(successBody);
     }
     catch(const std::exception& e)
     {
