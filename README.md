@@ -407,3 +407,13 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     ```
     ![](images/aichat2.png)
 
+
+<br>
+
+21. 2025.12.29
+
+    尝试集成多种类型的ai大模型。
+
+    完成`AIConfig`, `AIFactory`, `AIStrategy`, `AIToolRegistry`的编写
+
+    因为与原项目业务上的差别越来越大，实际上`Message Queue`是没有使用到的
