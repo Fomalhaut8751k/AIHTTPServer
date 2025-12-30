@@ -6,6 +6,15 @@
 
 #include "../include/ChatServer.h"
 
+const std::string RABBITMQ_HOST = "localhost";
+const std::string QUEUE_NAME = "sql_queue";
+const int THREAD_NUM = 2;
+
+void executeMysql(const std::string sql){
+    http::MysqlUtil mysqlUtil_;
+    mysqlUtil_.executeUpdate(sql);
+}
+
 int main(int argc, char* argv[])
 {
     logger_->INFO("pid = " + getpid());
@@ -34,5 +43,9 @@ int main(int argc, char* argv[])
     
     ChatServer server(port, serverName);
     server.setThreadNum(4);
+
+    RabbitMQThreadPool pool(RABBITMQ_HOST, QUEUE_NAME, THREAD_NUM, executeMysql);
+    pool.start();
+
     server.start();
 }

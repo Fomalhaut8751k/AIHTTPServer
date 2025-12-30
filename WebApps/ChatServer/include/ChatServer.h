@@ -13,6 +13,7 @@
 #include "../../../HttpServer/include/utils/JsonUtil.h"
 
 #include "AIUtil/AIHelper.h"
+#include "AIUtil/MQManager.h"
 
 class EntryHandler;
 class LoginHandler;
@@ -103,6 +104,14 @@ private:
     // std::unordered_map<int, bool> onlineUsers_;
     std::unordered_map<int, int> onlineUsers_;  // 多种状态
     std::mutex mutexForOnlineUsers_;
+
+    // 多个用户和多个机器人对应
+    // std::unordered_map<int, std::shared_ptr<AIHelper>> chatInformation;
+    //                userid                 robotid
+    std::unordered_map<int, std::unordered_map<int, std::shared_ptr<AIHelper>>> chatInformation;
+
+    std::mutex mutexForChatInformation;
+
 };
 
 #endif

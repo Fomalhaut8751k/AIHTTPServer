@@ -18,20 +18,16 @@ void AIHelper::setModel(const std::string& modelName)
 }
 
 // 添加一条用户消息
-void AIHelper::addMessage(int userId, 
-                        //   const std::string& userName, 
-                          bool is_user,
-                          const std::string& userInput)
+void AIHelper::addMessage(const std::string& userInput, int64_t timestamp)
 {
-    auto now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    messages.push_back({userInput, ms});
+    std::string msStr = timestampToString(timestamp);
+    messages.push_back({userInput, msStr});
     // 消息队列异步入库
     // pushMessageToMysql(userId, userName, is_user, userInput, ms);
 }
 
-void AIHelper::restoreMessage(const std::string& userInput, long long ms)
+// void AIHelper::restoreMessage(const std::string& userInput, long long ms)
+void AIHelper::restoreMessage(const std::string& userInput, const std::string& ms)
 {
     messages.push_back({userInput, ms});
 }
@@ -88,7 +84,8 @@ json AIHelper::request(const json& payload)
     return executeCurl(payload);
 }
 
-std::vector<std::pair<std::string, long long>> AIHelper::GetMessage()
+// std::vector<std::pair<std::string, long long>> AIHelper::GetMessage()
+std::vector<std::pair<std::string, std::string>> AIHelper::GetMessage()
 {
     return this->messages;
 }
@@ -183,4 +180,29 @@ void AIHelper::pushMessageToMysql(int userId,
 
     // 改成消息队列异步执行mysql操作，用于流量削峰和解耦逻辑
     MQManager::instance().publish("sql_queue", sql);
+}
+
+void AIHelper::pushMessageToMysql(const int& userId, const int& robotId,
+                            const std::string& message, const std::string& source, int64_t timestamp)
+{
+    // std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))";
+    std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES ("
+        + std::to_string(userId) + ", "
+        + std::to_string(robotId) + ", "
+        + "'" + message + "'" + ", "
+        + "'" + source + "'" + ", "
+        + timestampToString(timestamp) + ")";
+    MQManager::instance().publish("sql_queue", sql);
+}
+
+std::string AIHelper::timestampToString(int64_t timestamp) 
+{
+    // timestamp通常是秒级，如果timestamp是毫秒级则除以1000
+    time_t t = static_cast<time_t>(timestamp);
+    struct tm* tm_info = localtime(&t);  // 或 gmtime() 获取UTC时间
+    
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+    
+    return std::string(buffer);
 }

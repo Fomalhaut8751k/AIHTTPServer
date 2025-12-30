@@ -60,7 +60,13 @@ void OfflineAIMessageShowHandler::handle(const http::HttpRequest& req, http::Htt
 
 bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int& robotId, json& js)
 {
-    std::string sql = "SELECT * FROM offlineAIRobotMessage WHERE userid = ? AND robotid = ?";
+    // AIHelper的创建还需要对应的apiKey
+    std::string sql = R"(
+        SELECT o.*, r.apikey 
+        FROM offlineAIRobotMessage o 
+        JOIN AIRobot r ON o.robotid = r.robotid 
+        WHERE o.userid = ? AND o.robotid = ?
+    )";
     sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, robotId);
     if(!res){
         logger_->WARN("Query failed or no results");
@@ -68,12 +74,34 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
     }
     while(res->next())
     {
-        int userid = res->getInt("userid");
-        int robotid = res->getInt("robotid");
+        // int userid = res->getInt("userid");
+        // int robotid = res->getInt("robotid");
 
         std::string message = res->getString("message");
         std::string source = res->getString("source");
         std::string timestamp = res->getString("created_at");
+        long long ts = res->getInt64("created_at");
+        std::string apikey = res->getString("apikey");
+
+        /* 此会话非彼会话，指的就是用户和AI的聊天
+
+            1. std::unordered_map<int, std::unordered_map<int, std::shared_ptr<AIHelper>>> chatInformation;
+            2. 因为是unordered_map，因此chatInformation[userId]不存在，也会创建一个空的
+        */
+        auto& userSessionsMap = server_->chatInformation[userId]; // user会话map，和若干个AI的会话
+        std::shared_ptr<AIHelper> helper;
+        auto itSession = userSessionsMap.find(robotId);  // user和某个robot的会话
+        if(itSession == userSessionsMap.end())
+        {   // 如果没有这个会话
+            helper = std::make_shared<AIHelper>(apikey);
+            userSessionsMap[robotId] = helper;
+        }
+        else
+        {
+            helper = itSession->second;
+        }
+        // 存储到服务器的内存当中
+        helper->restoreMessage(message, timestamp);
 
         js["message"].push_back(
             {
@@ -83,6 +111,11 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
             }
         );
     }
+
+    // auto& it = server_->chatInformation[userId][robotId];
+    // for(auto& item : it->GetMessage()){
+    //     std::cout << item.second << ": " << "pdcHelloWorld" << std::endl;
+    // }
 
     return true;
 }

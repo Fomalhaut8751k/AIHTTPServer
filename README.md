@@ -417,3 +417,33 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     完成`AIConfig`, `AIFactory`, `AIStrategy`, `AIToolRegistry`的编写
 
     因为与原项目业务上的差别越来越大，实际上`Message Queue`是没有使用到的
+
+
+
+    原先的逻辑，每次发送的都是独立的提问和回答，AI无法联系上下文进行回答。正确的做法应该是把问题加上之前全部的问答发给AI，如图所示，看似是仅仅发送了红框的内容，实际上是发送了蓝框的内容，从而使得AI能够结合之前的问答给出答案。
+
+    ![](images/context.png)
+
+    因此，登录后加载历史聊天记录的时候，应该把之前的聊天记录都写到一个容器当中，新发送的消息也要添加到其中，发送消息时把容器中的问答对加到问题的前面，一同发送给AI。
+
+<br>
+
+22. 2025.12.30
+
+    修改了聊天发送逻辑，把历史问答添加到本次问题的前面，使得AI可以根据上文进行回答，而不是每次都是独立的思考。
+
+    ![](images/context2.png)
+
+- 问题八
+
+    使用`MQManager`提交数据，但是出现了`a socket error occurred`的错误，导致消息无法被写入到数据库当中。
+    ```cpp
+    std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES ("
+        + std::to_string(userId) + ", "
+        + std::to_string(robotId) + ", "
+        + "'" + message + "'" + ", "
+        + "'" + source + "'" + ", "
+        + std::to_string(timestamp) + ")";
+    MQManager::instance().publish("sql_queue", sql);
+    ```
+    ![](images/socketerror.png)

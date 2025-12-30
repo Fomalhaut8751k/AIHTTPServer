@@ -43,11 +43,18 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         std::string question = parsed["message"];
 
         int64_t questionTimestamp = parsed["timestamp"].get<int64_t>() / 1000; // 移除毫秒部分
-
         std::string api_key = findApiKeyforRobotId(targetAIRobotId);
-        auto AIResp = aiRobotResponse(userId, question, api_key);
+
+        auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
+        // 把消息写入AIHelper的messages中:
+        AIHelperPtr->addMessage(question, questionTimestamp);
+
+        auto AIResp = AIHelperPtr->chat(userId);
+        // auto AIResp = aiRobotResponse(userId, question, api_key);
         std::string answer = AIResp.first;
         int64_t answerTimestamp = AIResp.second;
+        // 把消息写入AIHelper的messages中:
+        AIHelperPtr->addMessage(answer, answerTimestamp);
         
         /*  两种时间戳的表示方法有区别？
             (gdb) p questionTimestamp
@@ -57,6 +64,10 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         */
         // std::string messageForUser = "user";
         // std::string messageForRobot = "robot";
+
+        for(auto& item: AIHelperPtr->GetMessage()){
+            std::cout << item.second << ": " << item.first << std::endl;
+        }
 
         writeIntoTargetOfflineMessage(userId, targetAIRobotId, question, "user", questionTimestamp);
         writeIntoTargetOfflineMessage(userId, targetAIRobotId, answer, "robot", answerTimestamp);
@@ -114,17 +125,39 @@ std::pair<std::string, int64_t> AIRobotSendHandler::aiRobotResponse(const int& u
 {
     // AIHelper的生命周期？
     std::shared_ptr<AIHelper> AIHelperPtr = std::make_shared<AIHelper>(api_key);
-    AIHelperPtr->addMessage(userId, true, question);
+    // AIHelperPtr->addMessage(userId, true, question);
     return AIHelperPtr->chat(userId);
 }
 
 // 写入离线消息
+// bool AIRobotSendHandler::writeIntoTargetOfflineMessage(const int& userId, const int& robotId,
+//                             const std::string& message, const std::string& source, int64_t timestamp)
+// {
+//     std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))";
+//     int affectedRows = mysqlUtil_.executeUpdate(sql, userId, robotId, message, source, timestamp);
+//     // std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (1, 1, '你好呀！✨ 很高兴见到你！今天过得怎么样呀？希望你度过了愉快的一天。我随时准备好陪你聊天、帮你解决问题，或者就这样轻松愉快地闲聊一会儿。有什么想跟我分享的吗？ 🌟', 'user', FROM_UNIXTIME(1766820845))" ;
+//     // int affectedRows = mysqlUtil_.executeUpdate(sql);
+//     return affectedRows > 0;
+// }
+
+// 通过MQ写离线消息
 bool AIRobotSendHandler::writeIntoTargetOfflineMessage(const int& userId, const int& robotId,
-                            const std::string& message, const std::string& source, int64_t timestamp)
+                             const std::string& message, const std::string& source, int64_t timestamp)
 {
-    std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))";
-    int affectedRows = mysqlUtil_.executeUpdate(sql, userId, robotId, message, source, timestamp);
-    // std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (1, 1, '你好呀！✨ 很高兴见到你！今天过得怎么样呀？希望你度过了愉快的一天。我随时准备好陪你聊天、帮你解决问题，或者就这样轻松愉快地闲聊一会儿。有什么想跟我分享的吗？ 🌟', 'user', FROM_UNIXTIME(1766820845))" ;
-    // int affectedRows = mysqlUtil_.executeUpdate(sql);
-    return affectedRows > 0;
+    // 寻找对应的AIHelper会话
+    auto& it = server_->chatInformation[userId][robotId];
+    if(!it){
+        logger_->ERROR("Unable to find relevant AIHelper");
+        return false;
+    }
+    try
+    {
+        it->pushMessageToMysql(userId, robotId, message, source, timestamp);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    return true;
 }
