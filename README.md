@@ -436,6 +436,38 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
 - 问题八
 
+    对于新添加的AI，一向他发送消息就会出现段错误，通过`gdb`调试显示以下内容：
+
+    ![](images/messageserror.png)
+
+    说明`AIRobotSendHandler.cpp`中，通过这样获取到的`AIHelperPtr`是一个`nullptr`。因为`chatInformation`的构建是在用户点开左侧AI列表中指定的某个AI时调用执行的(触发`OfflineAIMessageShowHandler`)，它会从数据库中获取当前用户和当前AI的聊天记录，遍历取出来的数据时，如果发现当前用户和当前AI的会话(`AIHelper`)不存在，那么就会创建。但前提是，遍历取出来的数据，如果数据库中本来就没有二者的聊天记录，`while(res->next())`就不会执行，因此相应的会话也不会被创建。
+    ```cpp
+    auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
+    ```
+    ```cpp
+    while(res->next())  // 如果没有任何聊天记录，那么这个循环根本不会开始，因此不会创建AIHelper
+    {
+        ...
+
+        auto& userSessionsMap = server_->chatInformation[userId]; // user会话map，和若干个AI的会话
+        std::shared_ptr<AIHelper> helper;
+        auto itSession = userSessionsMap.find(robotId);  // user和某个robot的会话
+        if(itSession == userSessionsMap.end())
+        {   // 如果没有这个会话
+            helper = std::make_shared<AIHelper>(apikey);
+            userSessionsMap[robotId] = helper;
+        }
+    }
+    ```
+
+<br>
+
+23. 2025.12.31
+
+    修复了新添加的AI提问时会直接出现段错误的问题。通过在发送数据时，检测当前用户和当前AI的会话(`AIHelper`)是否存在，如果不存在，就地创建一个新的。
+
+-   问题九 
+
     使用`MQManager`提交数据，但是出现了`a socket error occurred`的错误，导致消息无法被写入到数据库当中。
     ```cpp
     std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES ("
@@ -446,4 +478,15 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
         + std::to_string(timestamp) + ")";
     MQManager::instance().publish("sql_queue", sql);
     ```
+    
     ![](images/socketerror.png)
+    
+    发现是`RabbitMQ`配置和部署，以及`sql`语句的问题，解决后，聊天消息就可以正确的写入数据库当中了。
+
+    ![](images/rabbitmq1.png)
+
+    ![](images/rabbitmq2.png)
+
+    ![](images/rabbitmq3.png)
+
+    但重新登陆后，部分聊天记录的显示顺序有问题。

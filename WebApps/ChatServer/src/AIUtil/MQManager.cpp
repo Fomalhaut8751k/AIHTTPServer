@@ -68,7 +68,11 @@ void RabbitMQThreadPool::worker(int id)
 {
     try
     {
-        auto channel = AmqpClient::Channel::Create(rabbitmq_host_, 5672, "guest", "guest", "/");
+        // auto channel = AmqpClient::Channel::Create(rabbitmq_host_, 5672, "guest", "guest", "/");
+        auto channel = AmqpClient::Channel::Create("localhost", 5672, "guest", "guest", "/");
+        // AmqpClient::Channel::OpenOpts opts;  // 直接用默认的参数
+        // opts.host = "127.0.0.1";
+        // auto channel = AmqpClient::Channel::Open(opts);
         channel->DeclareQueue(queue_name_, false, true, false, false);
         /* 声明(创建一个)AMQP队列
             queue_name_: 队列名称

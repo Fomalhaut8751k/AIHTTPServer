@@ -185,13 +185,15 @@ void AIHelper::pushMessageToMysql(int userId,
 void AIHelper::pushMessageToMysql(const int& userId, const int& robotId,
                             const std::string& message, const std::string& source, int64_t timestamp)
 {
+    std::string safeMessage = escapeString(message);
     // std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))";
     std::string sql = "INSERT INTO offlineAIRobotMessage (userid, robotid, message, source, created_at) VALUES ("
         + std::to_string(userId) + ", "
         + std::to_string(robotId) + ", "
-        + "'" + message + "'" + ", "
+        + "'" + safeMessage + "'" + ", "
         + "'" + source + "'" + ", "
-        + timestampToString(timestamp) + ")";
+        + "FROM_UNIXTIME(" + std::to_string(timestamp) + "))";
+        // + timestampToString(timestamp) + ")";
     MQManager::instance().publish("sql_queue", sql);
 }
 

@@ -45,7 +45,12 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         int64_t questionTimestamp = parsed["timestamp"].get<int64_t>() / 1000; // 移除毫秒部分
         std::string api_key = findApiKeyforRobotId(targetAIRobotId);
 
+        // 如果是新创建的AI，还没有聊天记录时，就不会生产对应的AIHelper，这里返回的就是nullptr
         auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
+        if(!AIHelperPtr){  // 如果是nullptr，就创建
+            server_->chatInformation[userId][targetAIRobotId] = std::make_shared<AIHelper>(api_key);
+            AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
+        }
         // 把消息写入AIHelper的messages中:
         AIHelperPtr->addMessage(question, questionTimestamp);
 
