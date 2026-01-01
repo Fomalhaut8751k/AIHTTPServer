@@ -65,7 +65,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         SELECT o.*, r.apikey 
         FROM offlineAIRobotMessage o 
         JOIN AIRobot r ON o.robotid = r.robotid 
-        WHERE o.userid = ? AND o.robotid = ?
+        WHERE o.userid = ? AND o.robotid = ? ORDER BY created_at ASC
     )";
     sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, robotId);
     if(!res){

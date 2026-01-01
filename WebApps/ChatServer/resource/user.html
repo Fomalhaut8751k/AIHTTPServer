@@ -625,7 +625,7 @@
             
             // ========== 全局数据存储 ==========
             let offlineMessages = {};      // 离线消息（未读）
-            let chatHistory = {};          // 聊天历史记录（持久化）
+            let chatHistory = {};          // 聊天历史记录（仅存储已加载的联系人）
             let currentContact = null;     // 当前选中的联系人
             let currentUserId = null;      // 当前用户ID（需要从服务器获取）
             let searchMode = '';           // 搜索模式：'user' 或 'ai'
@@ -801,16 +801,11 @@
                     if (allContacts.length > 0) {
                         updateContactList(allContacts);
                         
-                        // 初始化聊天历史记录
-                        allContacts.forEach(contact => {
-                            const contactId = contact.id;
-                            if (!chatHistory[contactId]) {
-                                chatHistory[contactId] = [];
-                            }
-                        });
+                        // 注意：这里不再初始化所有联系人的聊天历史记录
+                        // 只有在用户点击联系人时才会创建对应的聊天历史记录
                         
-                        // 获取离线消息
-                        fetchOfflineMessages();
+                        // 获取离线消息（用于显示红点）
+                        // fetchOfflineMessages();
                         
                     } else {
                         console.log('没有联系人数据');
@@ -824,110 +819,7 @@
             // 页面加载时调用
             loadAllContacts();
             
-            // ========== 获取离线消息函数 ==========
-            function fetchOfflineMessages() {
-                fetch('/user/offlinemessage', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({
-                        action: 'get_offline_message'
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('收到离线消息数据:', data);
-                    
-                    if (data && data.status === true && data.message) {
-                        processOfflineMessages(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('获取离线消息失败:', error);
-                });
-            }
-            
-            // ========== 处理离线消息（适配新格式） ==========
-            function processOfflineMessages(messageData) {
-                offlineMessages = {};
-                
-                // 新的数据结构：{"message": {"2": [...], "3": [...]}, "status": true}
-                if (messageData && messageData.message) {
-                    // 遍历所有用户的消息
-                    for (const [userId, messages] of Object.entries(messageData.message)) {
-                        if (!offlineMessages[userId]) {
-                            offlineMessages[userId] = [];
-                        }
-                        
-                        // 将离线消息添加到离线消息列表
-                        messages.forEach(msg => {
-                            // 根据source判断消息方向
-                            // source为"user"时，表示当前用户发送的消息（显示在右侧）
-                            // source为"friend"时，表示好友发送的消息（显示在左侧）
-                            const isFromOther = msg.source === 'friend';
-                            
-                            offlineMessages[userId].push({
-                                message: msg.message,
-                                timestamp: msg.timestamp,
-                                isOffline: true,
-                                source: msg.source, // 'user' 或 'friend'
-                                senderId: isFromOther ? userId : currentUserId,
-                                isFromOther: isFromOther
-                            });
-                        });
-                    }
-                }
-                
-                // 在联系人列表上显示红点
-                showUnreadBadges();
-            }
-            
-            // ========== 显示未读红点 ==========
-            function showUnreadBadges() {
-                const contactItems = document.querySelectorAll('.contact-item');
-                
-                contactItems.forEach(item => {
-                    const onclickAttr = item.getAttribute('onclick');
-                    if (onclickAttr) {
-                        const match = onclickAttr.match(/selectContact\('([^']+)', '([^']+)', ([^)]+)\)/);
-                        if (match) {
-                            const contactId = match[1];
-                            
-                            if (offlineMessages[contactId] && offlineMessages[contactId].length > 0) {
-                                // 移除可能已存在的红点
-                                const existingBadge = item.querySelector('.unread-badge');
-                                if (existingBadge) {
-                                    existingBadge.remove();
-                                }
-                                
-                                // 获取头像容器
-                                const avatarContainer = item.querySelector('.avatar-container');
-                                if (avatarContainer) {
-                                    // 添加红点到头像容器
-                                    const badge = document.createElement('div');
-                                    badge.className = 'unread-badge';
-                                    const unreadCount = offlineMessages[contactId].length;
-                                    badge.innerHTML = unreadCount > 99 ? '99+' : unreadCount;
-                                    
-                                    // 添加悬停效果
-                                    badge.style.cursor = 'pointer';
-                                    badge.title = `${unreadCount}条未读消息`;
-                                    
-                                    avatarContainer.appendChild(badge);
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // ========== 将离线消息合并到聊天历史 ==========
+            // ========== 将离线消息合并到聊天历史（当用户点击联系人时调用）==========
             function mergeOfflineToHistory(userId) {
                 if (offlineMessages[userId] && offlineMessages[userId].length > 0) {
                     // 将离线消息添加到聊天历史
@@ -958,7 +850,7 @@
                 return false; // 没有离线消息
             }
             
-            // ========== 添加消息到聊天历史（适配新格式） ==========
+            // ========== 添加消息到聊天历史（仅当用户点击联系人或发送消息时调用）==========
             function addMessageToHistory(userId, messageData) {
                 if (!chatHistory[userId]) {
                     chatHistory[userId] = [];
@@ -1103,9 +995,6 @@
                         throw new Error('服务器返回空数据');
                     } 
                     if (data.status == true) {
-                        // const resultKey = type === 'targetId';
-                        const resultName = type === 'ai' ? 'robotname' : 'username';
-                        
                         displaySearchResults([{
                             id: data['targetId'],
                             name: searchText,  // 使用搜索的名称
@@ -1298,7 +1187,7 @@
                 `;
                 
                 // 显示未读消息红点
-                showUnreadBadges();
+                // showUnreadBadges();
             }
             
             // ========== 选择联系人（增强版，支持AI） ==========
@@ -1333,7 +1222,7 @@
                 loadChatHistory(userId, isAI, userName, hasOfflineMessages);
             };
             
-            // ========== 加载聊天记录（新增函数，修复好友消息方向判断）==========
+            // ========== 加载聊天记录（仅在点击联系人时调用）==========
             function loadChatHistory(contactId, isAI, contactName, hasNewOfflineMessages = false) {
                 // 确定请求的端点
                 const endpoint = isAI ? '/user/offlineaimessage' : '/user/offlinemessage';
@@ -1372,7 +1261,12 @@
                         // 处理聊天记录数据
                         const chatData = data.message;
                         
-                        // 清空当前联系人的历史记录
+                        // 初始化该联系人的聊天历史记录（如果还没有的话）
+                        if (!chatHistory[contactId]) {
+                            chatHistory[contactId] = [];
+                        }
+                        
+                        // 清空当前联系人的历史记录（重新加载）
                         chatHistory[contactId] = [];
                         
                         // 处理聊天消息
@@ -1953,9 +1847,7 @@
             }
 
             console.log('微信界面已加载');
-            console.log('新增功能：支持同时加载好友列表和AI机器人列表');
-            console.log('新增功能：支持加载AI聊天记录');
-            console.log('修复：好友聊天记录方向判断 - source: "user" 显示在右侧，source: "friend" 显示在左侧');
+            console.log('修改：只在点击联系人时加载聊天记录，不再自动初始化所有联系人的聊天历史');
         });
     </script>
 </body>
