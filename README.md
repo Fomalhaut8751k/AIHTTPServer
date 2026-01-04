@@ -503,4 +503,25 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     修复了登录成功进入聊天页面后自动发送一次获取离线消息(获取失败但是不影响接下来的使用)
 
 
+<br>
+
+25. 2026.1.4
+
+    实现集成多个不同类型AI的模型，包括：`Aliyun`, `DouBao`, `AliyunRAG`, `AliyunMcp`
+
+    一个`AIHelper`对应一个AI聊天机器人。在获取对应AI的聊天记录的时候创建或获取(web端点击左边AI列表中对应的AI时)。`AIHelper`中存储了`AIStrategy`类型的指针，原先的`apiKey`, `model`和`apiUrl`都被存储到了其中。
+
+    使用工厂方法`StrategyFactory`分离出`AIStrategy`的创建，并且`StrategyFactory`本身是单例模式。在`AIHelper`的方法中获取这个单例去创建对应的`AIStrategy`。
+
+    首先，需要修改数据库`AIRobot`的结构，在原有的基础上添加一条字段表示策略的类型，用整形来记录，使用的时候转为字符串类型即可。目前有4种`AIStrategy`，其对应的策略类型分别如下所示：
     
+    ```cpp
+    static StrategyRegister<AliyunStrategy> regAliyun("1");
+    static StrategyRegister<DouBaoStrategy> reDoubao("2");
+    static StrategyRegister<AliyunRAGStrategy> regAliyunRag("3");
+    static StrategyRegister<AliyunMcpStrategy> regAliyunMcp("4");
+    ```
+
+    ![](images/newairobottable.png)
+
+

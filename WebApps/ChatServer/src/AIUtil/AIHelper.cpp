@@ -4,17 +4,43 @@
 #include <stdexcept>
 #include <chrono>
 
-// 构造函数
+// 默认构造函数
+AIHelper::AIHelper()
+{
+    // 默认使用阿里云大模型
+    strategy = StrategyFactory::instance().create("1");  
+    /*  虽然叫做create但实际上没有创建，正常查找map，没找到就抛出异常
+
+        static StrategyRegister<AliyunStrategy> regAliyun("1");
+        static StrategyRegister<DouBaoStrategy> reDoubao("2");
+        static StrategyRegister<AliyunRAGStrategy> regAliyunRag("3");
+        static StrategyRegister<AliyunMcpStrategy> regAliyunMcp("4");
+    */
+}
+
+// 有参构造函数
+AIHelper::AIHelper(const int& strategyType)
+{
+    strategy = StrategyFactory::instance().create(std::to_string(strategyType));
+}
+
+// 有参构造函数(第一版，后面不用)
 AIHelper::AIHelper(const std::string& apiKey):
     apiKey_(apiKey)
-{
-
+{   
+    
 }
 
 // 设置默认类型
 void AIHelper::setModel(const std::string& modelName)
 {
     model_ = modelName;
+}
+
+// 设置默认策略(AI模型)
+void AIHelper::setStrategy(std::shared_ptr<AIStrategy> strat)
+{
+    strategy = strat;
 }
 
 // 添加一条用户消息

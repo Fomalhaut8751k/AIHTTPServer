@@ -62,7 +62,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
 {
     // AIHelper的创建还需要对应的apiKey
     std::string sql = R"(
-        SELECT o.*, r.apikey 
+        SELECT o.*, r.apikey, r.strategyType
         FROM offlineAIRobotMessage o 
         JOIN AIRobot r ON o.robotid = r.robotid 
         WHERE o.userid = ? AND o.robotid = ? ORDER BY created_at ASC
@@ -82,6 +82,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         std::string timestamp = res->getString("created_at");
         long long ts = res->getInt64("created_at");
         std::string apikey = res->getString("apikey");
+        int strategyType = res->getInt("strategyType");
 
         /* 此会话非彼会话，指的就是用户和AI的聊天
 
@@ -93,7 +94,8 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         auto itSession = userSessionsMap.find(robotId);  // user和某个robot的会话
         if(itSession == userSessionsMap.end())
         {   // 如果没有这个会话
-            helper = std::make_shared<AIHelper>(apikey);
+            // helper = std::make_shared<AIHelper>(apikey);
+            helper = std::make_shared<AIHelper>(strategyType);
             userSessionsMap[robotId] = helper;
         }
         else

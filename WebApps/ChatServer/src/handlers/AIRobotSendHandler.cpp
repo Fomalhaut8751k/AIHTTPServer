@@ -43,8 +43,16 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         std::string question = parsed["message"];
 
         int64_t questionTimestamp = parsed["timestamp"].get<int64_t>() / 1000; // 移除毫秒部分
-        std::string api_key = findApiKeyforRobotId(targetAIRobotId);
 
+        std::string api_key = findApiKeyforRobotId(targetAIRobotId);
+        int strategy_type = findStrategyforRobotId(targetAIRobotId);  // 第二版，获取策略类型来创建AIHelper
+
+        assert(strategy_type != -1);  // -1表示策略无效
+        /*
+            assert抛出错误后程序结束，不会跳转到catch语句中
+            这里后续需要修改
+        */
+ 
         // 如果是新创建的AI，还没有聊天记录时，就不会生产对应的AIHelper，这里返回的就是nullptr
         auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
         if(!AIHelperPtr){  // 如果是nullptr，就创建
@@ -119,6 +127,19 @@ std::string AIRobotSendHandler::findApiKeyforRobotId(const int& robotid)
     }
     // 如果查询结果为空，返回空字符串
     return "";
+}
+
+// 找到对应的机器人对应的策略(通过robotid)
+int AIRobotSendHandler::findStrategyforRobotId(const int& robotid)
+{
+    std::string sql = "SELECT strategy FROM AIRobot WHERE robotid = ?";
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, robotid);
+    if(res->next()){
+        int strategyType = res->getInt("strategyType");
+        return strategyType;
+    }
+    // 如果查询结果为空，返回-1
+    return -1;
 }
 
 // 机器人回答问题

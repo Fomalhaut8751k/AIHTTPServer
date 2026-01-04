@@ -15,6 +15,9 @@ private:
     // 找到对应的机器人(通过robotid找到对应的api-key)
     std::string findApiKeyforRobotId(const int& robotid); 
 
+    // 找到对应的机器人对应的策略(通过robotid)
+    int findStrategyforRobotId(const int& robotid);
+
     // 机器人回答问题
     std::pair<std::string, int64_t> aiRobotResponse(const int& userid,
                                                     // const std::string& username,
