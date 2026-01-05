@@ -524,4 +524,32 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
     ![](images/newairobottable.png)
 
+<br>
+
+26. 2026.1.5
+
+    移除了从环境变量中获取api key的方法
+    
+    修复了改动较大导致的聊天记录无法正常加载的问题
+
+    之前的版本，服务器启动的时候会调用上面的四个语句，取其中一个举例说明：
+
+    ```cpp
+    static StrategyRegister<AliyunStrategy> regAliyun("1");
+    ```
+    调用`StrategyRegister`的构造函数，往`StrategyFactory`的单例中注册策略，即把策略编号(例子中的"1")即该策略对应的构造函数方法在`StrategyFactory`中的记录注册后的策略的`creators`（一个unordered_map）记录。
+
+    ```cpp
+    std::unordered_map<std::string, Creator> creators;
+    ```
+    当需要创建对应的`AIStrategy`时，就通过`StrategyFactory.create("1")`进行创建，在这个函数中，会从`StrategyFactory`的`creators`中找对于策略编号的策略的构造函数进行调用，返回创建好的策略。
+
+    我们希望在`AIHelper`创建时创建对应的`AIStrategy`，因此，提供了`AIHelper`的有参构造函数的重载版本，并给策略提供设置`apiKey`的方法，这样需要的时候可以直接访问，而不用从数据库中获取。
+    ```cpp
+    AIHelper::AIHelper(const int& strategyType, const std::string& apiKey)
+    {   // 创建对应的策略
+        strategy = StrategyFactory::instance().create(std::to_string(strategyType)); 
+        
+    }
+    ```
 

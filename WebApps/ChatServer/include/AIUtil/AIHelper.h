@@ -23,7 +23,7 @@ public:
     // 默认构造函数。默认策略类型"1"
     AIHelper();
     // 有参构造函数
-    AIHelper(const int& strategyType);
+    AIHelper(const int& strategyType, const std::string& apikey);
     // 有参构造函数，初始化API KEY，第二版将把他删掉
     AIHelper(const std::string& apikey);
 
@@ -32,6 +32,9 @@ public:
 
     // 设置默认策略
     void setStrategy(std::shared_ptr<AIStrategy> strat);
+
+    // 从策略中获取模型的API
+    std::string getApiKeyFromStrategy() const;
 
     // 添加一条消息
     void addMessage(const std::string& userInput, int64_t timestamp);

@@ -34,7 +34,8 @@ private:
 template<typename T>
 struct StrategyRegister{
     StrategyRegister(const std::string& name){
-        StrategyFactory::instance().registerStrategy(name, [](){
+        std::cerr << name << std::endl;
+        StrategyFactory::instance().registerStrategy(name, [&](){
             std::shared_ptr<AIStrategy> instance = std::make_shared<T>();
             return instance;
         });

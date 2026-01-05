@@ -95,7 +95,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         if(itSession == userSessionsMap.end())
         {   // 如果没有这个会话
             // helper = std::make_shared<AIHelper>(apikey);
-            helper = std::make_shared<AIHelper>(strategyType);
+            helper = std::make_shared<AIHelper>(strategyType, apikey);
             userSessionsMap[robotId] = helper;
         }
         else
@@ -113,10 +113,6 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
             }
         );
     }
-    // auto& it = server_->chatInformation[userId][robotId];
-    // for(auto& item : it->GetMessage()){
-    //     std::cout << item.second << ": " << "pdcHelloWorld" << std::endl;
-    // }
     return true;
 }
 

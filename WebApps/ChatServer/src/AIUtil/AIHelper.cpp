@@ -19,9 +19,11 @@ AIHelper::AIHelper()
 }
 
 // 有参构造函数
-AIHelper::AIHelper(const int& strategyType)
+AIHelper::AIHelper(const int& strategyType, const std::string& apiKey)
 {
+    // 下面的strategy是AIHelper成员变量
     strategy = StrategyFactory::instance().create(std::to_string(strategyType));
+    strategy->setApiKey(apiKey);
 }
 
 // 有参构造函数(第一版，后面不用)
@@ -41,6 +43,12 @@ void AIHelper::setModel(const std::string& modelName)
 void AIHelper::setStrategy(std::shared_ptr<AIStrategy> strat)
 {
     strategy = strat;
+}
+
+// 从策略中获取模型的API
+std::string AIHelper::getApiKeyFromStrategy() const
+{
+    return strategy->getApiKey();
 }
 
 // 添加一条用户消息

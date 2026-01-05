@@ -46,6 +46,7 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
 
         std::string api_key = findApiKeyforRobotId(targetAIRobotId);
         int strategy_type = findStrategyforRobotId(targetAIRobotId);  // 第二版，获取策略类型来创建AIHelper
+        // 这里还是需要从数据库中查找apikey,写到AIHelper的策略中之后就不需要了
 
         assert(strategy_type != -1);  // -1表示策略无效
         /*
@@ -56,7 +57,7 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         // 如果是新创建的AI，还没有聊天记录时，就不会生产对应的AIHelper，这里返回的就是nullptr
         auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
         if(!AIHelperPtr){  // 如果是nullptr，就创建
-            server_->chatInformation[userId][targetAIRobotId] = std::make_shared<AIHelper>(api_key);
+            server_->chatInformation[userId][targetAIRobotId] = std::make_shared<AIHelper>(strategy_type, api_key);
             AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
         }
         // 把消息写入AIHelper的messages中:

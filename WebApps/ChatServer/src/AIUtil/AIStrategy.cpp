@@ -5,9 +5,9 @@
 AliyunStrategy::AliyunStrategy()
 {
     // 在系统的环境变量中查找名为 "DASHSCOPE_API_KEY" 的变量
-    const char* key = std::getenv("DASHSCOPE_API_KEY");
-    if(!key) throw std::runtime_error("Aliyun API Key not found!");
-    apiKey_ = key;
+    // const char* key = std::getenv("DASHSCOPE_API_KEY");
+    // if(!key) throw std::runtime_error("Aliyun API Key not found!");
+    // apiKey_ = key;
     isMCPModel = true;
 }
 
@@ -30,9 +30,9 @@ std::string AliyunStrategy::getModel() const
 // =========== DouBaoStrategy ===========
 DouBaoStrategy::DouBaoStrategy()
 {
-    const char* key = std::getenv("DOUBAO_API_KEY");
-    if(!key) throw std::runtime_error("DOUBAO API Key not found!");
-    apiKey_ = key;
+    // const char* key = std::getenv("DOUBAO_API_KEY");
+    // if(!key) throw std::runtime_error("DOUBAO API Key not found!");
+    // apiKey_ = key;
     isMCPModel = false;
 }
 
@@ -55,9 +55,9 @@ std::string DouBaoStrategy::getModel() const
 // =========== AliyunRAGStrategy =========== 
 AliyunRAGStrategy::AliyunRAGStrategy()
 {
-    const char* key = std::getenv("DASHSCOPE_API_KEY");
-    if(!key) throw std::runtime_error("Aliyun API Key not found!");
-    apiKey_ = key;
+    // const char* key = std::getenv("DASHSCOPE_API_KEY");
+    // if(!key) throw std::runtime_error("Aliyun API Key not found!");
+    // apiKey_ = key;
     isMCPModel = false;
 }
 
@@ -83,9 +83,9 @@ std::string AliyunRAGStrategy::getModel() const
 // =========== AliyunMcpStrategy =========== 
 AliyunMcpStrategy::AliyunMcpStrategy()
 {
-    const char* key = std::getenv("DASHSCOPE_API_KEY");
-    if(!key) throw std::runtime_error("Aliyun API Key not found!");
-    apiKey_ = key;
+    // const char* key = std::getenv("DASHSCOPE_API_KEY");
+    // if(!key) throw std::runtime_error("Aliyun API Key not found!");
+    // apiKey_ = key;
     isMCPModel = true;
 }
 
@@ -122,6 +122,7 @@ std::string AliyunMcpStrategy::getModel() const
     因此下面四行语句就包含了注册过程。
 */
 
+// 经过调试，这四行代码确实能在程序刚运行时就调用
 static StrategyRegister<AliyunStrategy> regAliyun("1");
 static StrategyRegister<DouBaoStrategy> reDoubao("2");
 static StrategyRegister<AliyunRAGStrategy> regAliyunRag("3");
