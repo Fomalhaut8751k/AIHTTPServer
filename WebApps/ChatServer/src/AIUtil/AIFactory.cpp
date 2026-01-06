@@ -10,9 +10,9 @@ void StrategyFactory::registerStrategy(const std::string& name, Creator creator)
 }
 
 std::shared_ptr<AIStrategy> StrategyFactory::create(const std::string& name){
-    for(auto item: creators){
-        std::cerr << item.first << ": " << &(item.second) << std::endl;
-    }
+    // for(auto item: creators){
+    //     std::cerr << item.first << ": " << &(item.second) << std::endl;
+    // }
     auto it = creators.find(name);
     if(it == creators.end()){
         throw std::runtime_error("Unknown strategy: " + name);

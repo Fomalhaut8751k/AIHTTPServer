@@ -22,21 +22,9 @@ AIHelper::AIHelper()
 AIHelper::AIHelper(const int& strategyType, const std::string& apiKey)
 {
     // 下面的strategy是AIHelper成员变量
+    std::cerr << strategyType << ": " << apiKey << std::endl;
     strategy = StrategyFactory::instance().create(std::to_string(strategyType));
     strategy->setApiKey(apiKey);
-}
-
-// 有参构造函数(第一版，后面不用)
-AIHelper::AIHelper(const std::string& apiKey):
-    apiKey_(apiKey)
-{   
-    
-}
-
-// 设置默认类型
-void AIHelper::setModel(const std::string& modelName)
-{
-    model_ = modelName;
 }
 
 // 设置默认策略(AI模型)
@@ -49,6 +37,18 @@ void AIHelper::setStrategy(std::shared_ptr<AIStrategy> strat)
 std::string AIHelper::getApiKeyFromStrategy() const
 {
     return strategy->getApiKey();
+}
+
+// 从策略中获取模型的URL
+std::string AIHelper::getApiUrlFromStrategy() const
+{
+    return strategy->getApiUrl();
+}
+
+// 从策略中获取模型的类型
+std::string AIHelper::getModelFromStrategy() const
+{
+    return strategy->getModel();
 }
 
 // 添加一条用户消息
@@ -71,8 +71,11 @@ void AIHelper::restoreMessage(const std::string& userInput, const std::string& m
 std::pair<std::string, int64_t> AIHelper::chat(int userId)
 {
     // 构造 payload
+    std::cerr << getApiUrlFromStrategy() << ": " << getApiKeyFromStrategy() << std::endl;
     json payload;
-    payload["model"] = model_;
+    // payload["model"] = model_;
+    payload["model"] = getModelFromStrategy();
+
     json msgArray = json::array();
 
     for(size_t i = 0; i < messages.size(); ++i)
@@ -134,14 +137,17 @@ json AIHelper::executeCurl(const json& payload)
     }
     std::string readBuffer;
     struct curl_slist* headers = nullptr;
-    std::string authHeader = "Authorization: Bearer " + apiKey_;
+    // std::string authHeader = "Authorization: Bearer " + apiKey_;
+    std::string authHeader = "Authorization: Bearer " + getApiKeyFromStrategy();
 
     headers = curl_slist_append(headers, authHeader.c_str());
     headers = curl_slist_append(headers, "Content-Type: application/json");
 
     std::string payloadStr = payload.dump();
     std::cout << "test json->payloadstr" << payloadStr << std::endl;
-    curl_easy_setopt(curl, CURLOPT_URL, apiUrl_.c_str());
+    // curl_easy_setopt(curl, CURLOPT_URL, apiUrl_.c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, getApiUrlFromStrategy().c_str());
+
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payloadStr.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);

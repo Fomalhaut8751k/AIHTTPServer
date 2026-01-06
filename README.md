@@ -553,3 +553,13 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     }
     ```
 
+<br>
+
+27. 2026.1.6
+
+    添加`doubao-seed-1-6-thinking-250715`模型。
+
+    修复了改动较大导致的AI无法正常回复的问题(网络连接失败，请检查连接后重试)
+
+    ![](images/doubao1.png)
+    

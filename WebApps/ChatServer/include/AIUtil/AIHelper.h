@@ -24,17 +24,18 @@ public:
     AIHelper();
     // 有参构造函数
     AIHelper(const int& strategyType, const std::string& apikey);
-    // 有参构造函数，初始化API KEY，第二版将把他删掉
-    AIHelper(const std::string& apikey);
-
-    // 设置默认模型(之后会拿掉)
-    void setModel(const std::string& modelName);
 
     // 设置默认策略
     void setStrategy(std::shared_ptr<AIStrategy> strat);
 
     // 从策略中获取模型的API
     std::string getApiKeyFromStrategy() const;
+
+    // 从策略中获取模型的URL
+    std::string getApiUrlFromStrategy() const;
+
+    // 从策略中获取模型的类型
+    std::string getModelFromStrategy() const;
 
     // 添加一条消息
     void addMessage(const std::string& userInput, int64_t timestamp);
@@ -77,13 +78,6 @@ private:
     std::string timestampToString(int64_t timestamp);
 
 // ========================================================================================
-    std::string apiKey_;
-    // 默认使用通义千问
-    std::string model_ = "qwen-plus";
-    // 对应地址
-    std::string apiUrl_ = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"; 
-
-    // 上面的准备都不要 =========================
     std::shared_ptr<AIStrategy> strategy;
 
     // 只存放消息内容和时间戳，因为是按顺序存放的，因此第0,2,4...即偶数个都是用户的，奇数都是机器人的

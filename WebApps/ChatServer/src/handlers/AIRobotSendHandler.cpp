@@ -44,19 +44,12 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
 
         int64_t questionTimestamp = parsed["timestamp"].get<int64_t>() / 1000; // 移除毫秒部分
 
-        std::string api_key = findApiKeyforRobotId(targetAIRobotId);
-        int strategy_type = findStrategyforRobotId(targetAIRobotId);  // 第二版，获取策略类型来创建AIHelper
-        // 这里还是需要从数据库中查找apikey,写到AIHelper的策略中之后就不需要了
-
-        assert(strategy_type != -1);  // -1表示策略无效
-        /*
-            assert抛出错误后程序结束，不会跳转到catch语句中
-            这里后续需要修改
-        */
- 
         // 如果是新创建的AI，还没有聊天记录时，就不会生产对应的AIHelper，这里返回的就是nullptr
         auto& AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
         if(!AIHelperPtr){  // 如果是nullptr，就创建
+            std::string api_key = findApiKeyforRobotId(targetAIRobotId);
+            int strategy_type = findStrategyforRobotId(targetAIRobotId);  // 第二版，获取策略类型来创建AIHelper
+            // 这里还是需要从数据库中查找apikey,写到AIHelper的策略中之后就不需要了
             server_->chatInformation[userId][targetAIRobotId] = std::make_shared<AIHelper>(strategy_type, api_key);
             AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
         }
@@ -133,7 +126,7 @@ std::string AIRobotSendHandler::findApiKeyforRobotId(const int& robotid)
 // 找到对应的机器人对应的策略(通过robotid)
 int AIRobotSendHandler::findStrategyforRobotId(const int& robotid)
 {
-    std::string sql = "SELECT strategy FROM AIRobot WHERE robotid = ?";
+    std::string sql = "SELECT strategyType FROM AIRobot WHERE robotid = ?";
     sql::ResultSet* res = mysqlUtil_.executeQuery(sql, robotid);
     if(res->next()){
         int strategyType = res->getInt("strategyType");
@@ -141,19 +134,6 @@ int AIRobotSendHandler::findStrategyforRobotId(const int& robotid)
     }
     // 如果查询结果为空，返回-1
     return -1;
-}
-
-// 机器人回答问题
-std::pair<std::string, int64_t> AIRobotSendHandler::aiRobotResponse(const int& userId,
-                                                // const std::string& userName,
-                                                const std::string& question, 
-                                                const std::string& api_key
-                                               )
-{
-    // AIHelper的生命周期？
-    std::shared_ptr<AIHelper> AIHelperPtr = std::make_shared<AIHelper>(api_key);
-    // AIHelperPtr->addMessage(userId, true, question);
-    return AIHelperPtr->chat(userId);
 }
 
 // 写入离线消息
