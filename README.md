@@ -563,3 +563,18 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
 
     ![](images/doubao1.png)
     
+<br>
+
+28. 2026.1.7
+
+    使用《晋书》苻坚载记构建阿里知识库，搭建`RAG`模型
+
+    `RAG`的全称为`Retrieval-Augmented Generation`，中文翻译时"检索增强生成"。简单来说，`RAG`就是让`AI`在回答问题前，先去资料库里找相关内容(检索)，再结合这些资料生成回答。这里截取了《晋书》中苻坚载记上下，帮助AI解答前秦天王苻坚的生平，经历等相关内容。
+
+    阿里云百炼的RAG模型输入的json结构和输出的json结构于阿里云百炼和豆包不同，因此，将原本的`AIHelper`::chat()的主要逻辑在其成员`AIStrategy`中实现，再在`AIHelper`::chat()中统一调用。在`AIStrategy`中实现chat()的逻辑需要把`AIHelper`中的message传给它。
+
+    下面是普通的阿里云百炼模型和带`RAG`的阿里云百炼模型:
+
+    ![](images/chatwithoutRAG.png)
+
+    ![](images/chatwithRAG.png)

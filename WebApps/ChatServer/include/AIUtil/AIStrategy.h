@@ -24,6 +24,10 @@ public:
         而 ApiKey是要手动设定的，因此提供另外提供
     */
     virtual void setApiKey(const std::string api_key) = 0;
+    virtual std::string getStrategyType() const = 0;
+
+    virtual void processRequest(json& payload, json& msgArray) = 0;
+    virtual std::pair<std::string, int64_t> processResponse(const json& response) = 0;
 
     virtual std::string getApiUrl() const = 0;  // 模型的网站
     virtual std::string getApiKey() const = 0;  // API Key
@@ -50,6 +54,10 @@ public:
     AliyunStrategy();
 
     void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "1"; }
+    
+    void processRequest(json& payload, json& msgArray) override;  // 预处理发送json
+    std::pair<std::string, int64_t> processResponse(const json& response) override;  // 提取接受json
 
     std::string getApiUrl() const override;
     std::string getApiKey() const override;
@@ -64,6 +72,10 @@ public:
     DouBaoStrategy();
 
     void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "2"; }
+
+    void processRequest(json& payload, json& msgArray) override;
+    std::pair<std::string, int64_t> processResponse(const json& response) override;
 
     std::string getApiUrl() const override;
     std::string getApiKey() const override;
@@ -78,6 +90,10 @@ public:
     AliyunRAGStrategy();
 
     void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "3"; }
+
+    void processRequest(json& payload, json& msgArray) override;
+    std::pair<std::string, int64_t> processResponse(const json& response) override;
 
     std::string getApiUrl() const override;
     std::string getApiKey() const override;
@@ -92,6 +108,10 @@ public:
     AliyunMcpStrategy();
 
     void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "4"; }
+
+    void processRequest(json& payload, json& msgArray) override;
+    std::pair<std::string, int64_t> processResponse(const json& response) override;
 
     std::string getApiUrl() const override;
     std::string getApiKey() const override;

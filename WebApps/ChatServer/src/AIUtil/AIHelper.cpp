@@ -33,6 +33,12 @@ void AIHelper::setStrategy(std::shared_ptr<AIStrategy> strat)
     strategy = strat;
 }
 
+// 获取策略类型
+std::string AIHelper::getStrategyType() const
+{
+    return strategy->getStrategyType();
+}
+
 // 从策略中获取模型的API
 std::string AIHelper::getApiKeyFromStrategy() const
 {
@@ -81,38 +87,32 @@ std::pair<std::string, int64_t> AIHelper::chat(int userId)
     for(size_t i = 0; i < messages.size(); ++i)
     {
         json msg;
-        if(i % 2 == 0)
-        {   // 偶数下标：用户
-            msg["role"] = "user";
-            msg["content"] = messages[i].first;
-        }
-        else
-        {   // 奇数下标：AI
-            msg["role"] = "assistant";
-            msg["content"] = messages[i].first;
-        }
+        msg["role"] = (i % 2 == 0 ? "user" : "assistant"); 
+        msg["content"] = messages[i].first;
         msgArray.push_back(msg);
     }
-    payload["messages"] = msgArray;
+
+    strategy->processRequest(payload, msgArray);  // 处理输入
 
     // 打印 payload (缩进4个空格)
     std::cout << "[DEBUG] payload = " << payload.dump(4) << std::endl;
 
-    // 执行请求
-    json response = executeCurl(payload);
+    json response = executeCurl(payload); // 执行请求
 
     std::cerr << response << std::endl;
 
-    if(response.contains("choices") && !response["choices"].empty())
-    {
-        std::string answer = response["choices"][0]["message"]["content"];
-        int64_t timestamp = response["created"];
-        // 保存AI回复
-        // addMessage(userId, userName, false, answer);
-        return {answer, timestamp};
-    }
+    return strategy->processResponse(response); // 处理输出
 
-    return {"[Error] 无法解析响应", -1};
+    // if(response.contains("choices") && !response["choices"].empty())
+    // {
+    //     std::string answer = response["choices"][0]["message"]["content"];
+    //     int64_t timestamp = response["created"];
+    //     // 保存AI回复
+    //     // addMessage(userId, userName, false, answer);
+    //     return {answer, timestamp};
+    // }
+
+    // return {"[Error] 无法解析响应", -1};
 }
 
 // 发送自定义的请求体

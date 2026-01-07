@@ -27,6 +27,8 @@ public:
 
     // 设置默认策略
     void setStrategy(std::shared_ptr<AIStrategy> strat);
+    // 获取策略类型
+    std::string getStrategyType() const;
 
     // 从策略中获取模型的API
     std::string getApiKeyFromStrategy() const;
