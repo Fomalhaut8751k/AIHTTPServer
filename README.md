@@ -578,3 +578,36 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     ![](images/chatwithoutRAG.png)
 
     ![](images/chatwithRAG.png)
+
+<br>
+
+29. 2026.1.8
+
+    修正了智能体`ID`硬编码的问题。
+
+    由于`RAG`模型的使用依赖于一个智能体应用的`Id`，之前使用的是硬编码的方法。如果在`AIRobot`添加一个新的属性记录`applicationId`，这违反了关联型数据库的第三范式：`applicationId`不仅依赖于主属性`robotid`(每个机器人对应不同的智能体应用Id)，还依赖于`stragtegyType`(只有为类别3时才有意义)。
+
+    ```sql
+    CREATE TABLE AIRobot_Application (
+        robotid INT PRIMARY KEY,
+        applicationId VARCHAR(100) NOT NULL,
+        FOREIGN KEY (robotid) REFERENCES AIRobot(robotid) ON DELETE CASCADE
+    );
+    ```
+
+    在`AliyunRAGStrategy`中，额外增加一个成员变量用来存储`applicationId`。
+
+    在`OfflineAIMessageShowHandler`中创建`AIHelper`的过程中，如果`strategyType`是3，就同时从数据库中读取当前`robotId`对应的`applicationId`。
+
+    ```cpp
+    // 为RAG模型设置对应的智能体应用Id
+    bool AIHelper::setApplicationIdForRAG(std::string aid) const
+    {
+        AliyunRAGStrategy* ptr = dynamic_cast<AliyunRAGStrategy*>(strategy.get());
+        if(ptr != nullptr){
+            ptr->setApplicationId(aid);
+            return true;
+        }
+        return false;
+    }
+    ```

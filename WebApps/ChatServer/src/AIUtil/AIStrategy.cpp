@@ -13,6 +13,7 @@ AliyunStrategy::AliyunStrategy()
     // const char* key = std::getenv("DASHSCOPE_API_KEY");
     // if(!key) throw std::runtime_error("Aliyun API Key not found!");
     // apiKey_ = key;
+    apiKey_ = "";
     isMCPModel = true;
 }
 
@@ -59,6 +60,7 @@ DouBaoStrategy::DouBaoStrategy()
     // const char* key = std::getenv("DOUBAO_API_KEY");
     // if(!key) throw std::runtime_error("DOUBAO API Key not found!");
     // apiKey_ = key;
+    apiKey_ = "";
     isMCPModel = false;
 }
 
@@ -105,6 +107,8 @@ AliyunRAGStrategy::AliyunRAGStrategy()
     // const char* key = std::getenv("DASHSCOPE_API_KEY");
     // if(!key) throw std::runtime_error("Aliyun API Key not found!");
     // apiKey_ = key;
+    apiKey_ = "";
+    applicationId_ = "";
     isMCPModel = false;
 }
 
@@ -113,8 +117,8 @@ std::string AliyunRAGStrategy::getApiUrl() const
     // const char* key = std::getenv("Knowledge_Base_ID");
     // if(!key) throw std::runtime_error("knowledge_Base_ID not found!");
     // std::string id(key);
-    std::string id = "9887ab9fd0244428a1ce8d850e0409be";
-    return "https://dashscope.aliyuncs.com/api/v1/apps/" + id + "/completion";
+    // std::string id = "9887ab9fd0244428a1ce8d850e0409be";
+    return "https://dashscope.aliyuncs.com/api/v1/apps/" + applicationId_ + "/completion";
 }
 
 std::string AliyunRAGStrategy::getApiKey() const

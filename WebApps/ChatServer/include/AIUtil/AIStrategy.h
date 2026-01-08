@@ -98,8 +98,13 @@ public:
     std::string getApiUrl() const override;
     std::string getApiKey() const override;
     std::string getModel() const override;
+
+    void setApplicationId(const std::string application_id) { applicationId_ = application_id; }
+    std::string getApplicationId() const { return applicationId_; }
+
 private:
     std::string apiKey_;
+    std::string applicationId_; // RAG特有的智能体应用ID
 };
 
 class AliyunMcpStrategy: public AIStrategy

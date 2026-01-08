@@ -1,8 +1,10 @@
 #include "../../include/AIUtil/AIHelper.h"
 #include "../../include/AIUtil/MQManager.h"
+#include "../../include/AIUtil/AIStrategy.h"
 
 #include <stdexcept>
 #include <chrono>
+#include <memory>
 
 // 默认构造函数
 AIHelper::AIHelper()
@@ -55,6 +57,17 @@ std::string AIHelper::getApiUrlFromStrategy() const
 std::string AIHelper::getModelFromStrategy() const
 {
     return strategy->getModel();
+}
+
+// 为RAG模型设置对应的智能体应用Id
+bool AIHelper::setApplicationIdForRAG(std::string aid) const
+{
+    AliyunRAGStrategy* ptr = dynamic_cast<AliyunRAGStrategy*>(strategy.get());
+    if(ptr != nullptr){
+        ptr->setApplicationId(aid);
+        return true;
+    }
+    return false;
 }
 
 // 添加一条用户消息

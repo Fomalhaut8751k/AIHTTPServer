@@ -39,6 +39,9 @@ public:
     // 从策略中获取模型的类型
     std::string getModelFromStrategy() const;
 
+    // 为RAG模型设置对应的智能体应用Id
+    bool setApplicationIdForRAG(std::string aid) const;
+
     // 添加一条消息
     void addMessage(const std::string& userInput, int64_t timestamp);
 

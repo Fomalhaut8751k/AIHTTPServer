@@ -96,6 +96,15 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         {   // 如果没有这个会话
             // helper = std::make_shared<AIHelper>(apikey);
             helper = std::make_shared<AIHelper>(strategyType, apikey);
+            if(strategyType == 3){  // 如果是阿里云百炼的RAG模型
+                std::string aId = "";
+                if(!getApplicationIdForRAG(robotId, aId)){
+                    logger_->ERROR("No corresponding intelligent agent application ID found");
+                }
+                if(!helper->setApplicationIdForRAG(aId)){
+                    logger_->ERROR("Set application ID failed");
+                }
+            }
             userSessionsMap[robotId] = helper;
         }
         else
@@ -114,6 +123,17 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         );
     }
     return true;
+}
+
+bool OfflineAIMessageShowHandler::getApplicationIdForRAG(const int& robotid, std::string& aid)
+{
+    std::string sql = "SELECT applicationId FROM AIRobot_Application WHERE robotid = ?";
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, robotid);
+    if(res->next()){
+        aid = res->getString("applicationId");
+        return true;
+    }
+    return false;
 }
 
 /*

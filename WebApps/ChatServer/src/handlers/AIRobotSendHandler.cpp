@@ -52,6 +52,15 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
             // 这里还是需要从数据库中查找apikey,写到AIHelper的策略中之后就不需要了
             server_->chatInformation[userId][targetAIRobotId] = std::make_shared<AIHelper>(strategy_type, api_key);
             AIHelperPtr = server_->chatInformation[userId][targetAIRobotId];
+            if(strategy_type == 3){  // 如果是阿里云百炼的RAG模型
+                std::string aId = "";
+                if(!getApplicationIdForRAG(targetAIRobotId, aId)){
+                    logger_->ERROR("No corresponding intelligent agent application ID found");
+                }
+                if(AIHelperPtr->setApplicationIdForRAG(aId)){
+                    logger_->ERROR("Set application ID failed");
+                }
+            }
         }
         // 把消息写入AIHelper的messages中:
         AIHelperPtr->addMessage(question, questionTimestamp);
@@ -134,6 +143,18 @@ int AIRobotSendHandler::findStrategyforRobotId(const int& robotid)
     }
     // 如果查询结果为空，返回-1
     return -1;
+}
+
+// 找到对应的机器人对应的application(通过robotid)
+bool AIRobotSendHandler::getApplicationIdForRAG(const int& robotid, std::string& aid)
+{
+    std::string sql = "SELECT applicationId FROM AIRobot_Application WHERE robotid = ?";
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, robotid);
+    if(res->next()){
+        aid = res->getString("applicationId");
+        return true;
+    }
+    return false;
 }
 
 // 写入离线消息

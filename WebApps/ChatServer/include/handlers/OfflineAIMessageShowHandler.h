@@ -12,6 +12,7 @@ public:
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
 private:
     bool getOfflineMessage(const int& userId, const int& robotId, json& js);
+    bool getApplicationIdForRAG(const int& robotid, std::string& aid);
 
     ChatServer* server_;
     http::MysqlUtil mysqlUtil_;
