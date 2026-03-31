@@ -65,7 +65,12 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
         // 把消息写入AIHelper的messages中:
         AIHelperPtr->addMessage(question, questionTimestamp);
 
+        writeIntoTargetOfflineMessage(userId, targetAIRobotId, question, "user", questionTimestamp);
+
+        // 这一步是会阻塞的，调用api等待回答的返回，如果被阻塞在这里，即在等待回答的时候，
+        // 用户执行其他操作都得等他完成
         auto AIResp = AIHelperPtr->chat(userId);
+
         // auto AIResp = aiRobotResponse(userId, question, api_key);
         std::string answer = AIResp.first;
         int64_t answerTimestamp = AIResp.second;
@@ -85,7 +90,6 @@ void AIRobotSendHandler::handle(const http::HttpRequest& req, http::HttpResponse
             std::cout << item.second << ": " << item.first << std::endl;
         }
 
-        writeIntoTargetOfflineMessage(userId, targetAIRobotId, question, "user", questionTimestamp);
         writeIntoTargetOfflineMessage(userId, targetAIRobotId, answer, "robot", answerTimestamp);
 
         json successResp;

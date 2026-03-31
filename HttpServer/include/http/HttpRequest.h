@@ -40,6 +40,7 @@ public:
 
     void addHeader(const char* start, const char* colon, const char* end);
     std::string getHeader(const std::string& field) const;
+    void showAll() const;
 
     const std::map<std::string, std::string>& headers() const { return headers_; }
 

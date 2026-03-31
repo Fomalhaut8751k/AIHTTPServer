@@ -130,6 +130,19 @@ std::string HttpRequest::getHeader(const std::string& field) const
     return "";
 }
 
+void HttpRequest::showAll() const{
+    for(auto it: headers_){
+        std::cerr << it.first << ": " << it.second << std::endl;
+    }
+    for(auto it: pathParameters_){
+        std::cerr << it.first << ": " << it.second << std::endl;
+    }
+    for(auto it: queryParameters_){
+        std::cerr << it.first << ": " << it.second << std::endl;
+    }
+    std::cerr << content_ << std::endl;
+}
+
 
 void HttpRequest::setBody(const char* start, const char* end)
 {   // 应该就是直接{}的一托

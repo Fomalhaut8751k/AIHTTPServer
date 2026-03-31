@@ -61,6 +61,7 @@ private:
     void initializeSession();
     void initializeRouter();
     void initializeMiddleWare();
+    void initializeSSLTLS();
 
     void setSessionManager(std::unique_ptr<http::session::SessionManager> manager);
 

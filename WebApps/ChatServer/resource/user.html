@@ -183,7 +183,7 @@
             padding: 0 15px;
             font-weight: bold;
             color: #666;
-            flex-shrink: 0; /* 防止头部被压缩 */
+            flex-shrink: 0;
         }
 
         /* 空白聊天界面 */
@@ -209,16 +209,16 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 确保内部滚动正确 */
+            overflow: hidden;
         }
 
         .chat-messages {
             flex: 1;
-            overflow-y: auto; /* 允许垂直滚动 */
+            overflow-y: auto;
             padding: 20px 0;
             display: flex;
             flex-direction: column;
-            min-height: 0; /* 重要：允许内容溢出并滚动 */
+            min-height: 0;
         }
 
         /* 输入区域 */
@@ -228,7 +228,7 @@
             border-top: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
-            flex-shrink: 0; /* 防止输入区域被压缩 */
+            flex-shrink: 0;
         }
 
         .message-input {
@@ -271,7 +271,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            flex-shrink: 0; /* 防止底部被压缩 */
+            flex-shrink: 0;
         }
 
         .tab-item {
@@ -297,7 +297,7 @@
             font-size: 11px;
         }
 
-        /* 滚动条样式 - 增强 */
+        /* 滚动条样式 */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -316,7 +316,7 @@
             background: #a8a8a8;
         }
 
-        /* 未读消息红点样式 - 修改为头像右上角 */
+        /* 未读消息红点样式 */
         .unread-badge {
             position: absolute;
             top: -5px;
@@ -339,6 +339,8 @@
         
         .contact-item {
             position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
         
         /* 头像容器样式 */
@@ -361,9 +363,9 @@
             font-size: 18px;
         }
 
-        /* AI机器人头像样式 - 改为紫色 */
+        /* AI机器人头像样式 */
         .avatar.ai-avatar {
-            background-color: #9c27b0; /* 紫色 */
+            background-color: #9c27b0;
         }
         
         /* 消息样式 */
@@ -436,7 +438,6 @@
             color: rgba(0, 0, 0, 0.5);
         }
         
-        /* 聊天区域占位符 - 当没有消息时显示 */
         .chat-placeholder {
             flex: 1;
             display: flex;
@@ -447,7 +448,6 @@
             text-align: center;
         }
         
-        /* 时间分隔线 */
         .time-divider {
             text-align: center;
             margin: 20px 0;
@@ -463,7 +463,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* AI聊天机器人标签 - 改为紫色 */
         .ai-label {
             color: #9c27b0;
             font-size: 12px;
@@ -471,7 +470,6 @@
             margin-right: 5px;
         }
 
-        /* 联系人分组标题 */
         .contact-group-title {
             padding: 10px 15px;
             font-size: 13px;
@@ -485,7 +483,6 @@
             margin-top: 0;
         }
         
-        /* AI回复消息样式 */
         .ai-message-indicator {
             display: inline-block;
             background-color: #9c27b0;
@@ -497,7 +494,6 @@
             vertical-align: middle;
         }
         
-        /* 消息加载动画 */
         .typing-indicator {
             display: inline-block;
             padding: 10px 15px;
@@ -651,6 +647,59 @@
                 e.stopPropagation();
             });
             
+            // ========== 添加未读消息红点 ==========
+            function addUnreadBadge(contactId) {
+                // 查找对应的联系人元素
+                const contactItems = document.querySelectorAll('.contact-item');
+                let targetContactItem = null;
+                
+                contactItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/selectContact\('([^']+)',/);
+                        if (match && match[1] === contactId) {
+                            targetContactItem = item;
+                        }
+                    }
+                });
+                
+                if (targetContactItem) {
+                    // 检查是否已经有红点
+                    const existingBadge = targetContactItem.querySelector('.unread-badge');
+                    if (!existingBadge) {
+                        const avatarContainer = targetContactItem.querySelector('.avatar-container');
+                        if (avatarContainer) {
+                            const badge = document.createElement('div');
+                            badge.className = 'unread-badge';
+                            badge.textContent = '1';
+                            avatarContainer.appendChild(badge);
+                        }
+                    } else {
+                        // 如果已经有红点，增加计数
+                        let count = parseInt(existingBadge.textContent) || 0;
+                        count++;
+                        existingBadge.textContent = count > 99 ? '99+' : count;
+                    }
+                }
+            }
+            
+            // ========== 移除未读消息红点 ==========
+            function removeUnreadBadge(contactId) {
+                const contactItems = document.querySelectorAll('.contact-item');
+                contactItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/selectContact\('([^']+)',/);
+                        if (match && match[1] === contactId) {
+                            const badge = item.querySelector('.unread-badge');
+                            if (badge) {
+                                badge.remove();
+                            }
+                        }
+                    }
+                });
+            }
+            
             // ========== 添加用户功能 ==========
             addUserBtn.addEventListener('click', function() {
                 console.log('添加用户被点击');
@@ -658,7 +707,6 @@
                 dropdownMenu.classList.remove('show');
                 switchToSearchMode('user');
                 
-                // 发送POST请求获取搜索数据
                 fetch('/user/search', {
                     method: 'POST',
                     headers: { 
@@ -672,15 +720,11 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    
                     return response.json();
                 })
                 .then(data => {
                     console.log('收到搜索数据:', data);
-                    
-                    // 如果有数据，可以更新UI
                     if (data && data.suggestedUsers) {
-                        // 可以在这里显示推荐用户
                         updateSuggestedUsers(data.suggestedUsers);
                     }
                 })
@@ -697,7 +741,6 @@
                 dropdownMenu.classList.remove('show');
                 switchToSearchMode('ai');
                 
-                // 发送POST请求获取AI机器人搜索数据
                 fetch('/user/aisearch', {
                     method: 'POST',
                     headers: { 
@@ -711,15 +754,11 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    
                     return response.json();
                 })
                 .then(data => {
                     console.log('收到AI搜索数据:', data);
-                    
-                    // 如果有数据，可以更新UI
                     if (data && data.suggestedAIs) {
-                        // 可以在这里显示推荐AI机器人
                         updateSuggestedAIs(data.suggestedAIs);
                     }
                 })
@@ -731,10 +770,8 @@
             
             // ========== 页面加载时自动获取联系人列表 ==========
             function loadAllContacts() {
-                // 清空所有联系人
                 allContacts = [];
                 
-                // 先加载好友列表
                 fetch('/user/friendlist', {
                     method: 'POST',
                     headers: { 
@@ -753,22 +790,18 @@
                 .then(friendData => {
                     console.log('收到好友数据:', friendData);
                     
-                    // 处理好友数据
                     if (friendData && friendData.contacts && friendData.contacts.length > 0) {
-                        // 标记好友类型
                         friendData.contacts.forEach(contact => {
-                            contact.type = 'user'; // 好友类型
+                            contact.type = 'user';
                             allContacts.push(contact);
                         });
                         
-                        // 获取当前用户ID
                         if (friendData.currentUserId) {
                             currentUserId = friendData.currentUserId;
                             console.log('当前用户ID:', currentUserId);
                         }
                     }
                     
-                    // 然后加载AI机器人列表
                     return fetch('/user/airobotlist', {
                         method: 'POST',
                         headers: { 
@@ -788,25 +821,15 @@
                 .then(aiData => {
                     console.log('收到AI机器人数据:', aiData);
                     
-                    // 处理AI机器人数据
                     if (aiData && aiData.contacts && aiData.contacts.length > 0) {
-                        // 标记AI类型
                         aiData.contacts.forEach(contact => {
-                            contact.type = 'ai'; // AI机器人类型
+                            contact.type = 'ai';
                             allContacts.push(contact);
                         });
                     }
                     
-                    // 更新联系人列表
                     if (allContacts.length > 0) {
                         updateContactList(allContacts);
-                        
-                        // 注意：这里不再初始化所有联系人的聊天历史记录
-                        // 只有在用户点击联系人时才会创建对应的聊天历史记录
-                        
-                        // 获取离线消息（用于显示红点）
-                        // fetchOfflineMessages();
-                        
                     } else {
                         console.log('没有联系人数据');
                     }
@@ -816,21 +839,16 @@
                 });
             }
             
-            // 页面加载时调用
             loadAllContacts();
             
-            // ========== 将离线消息合并到聊天历史（当用户点击联系人时调用）==========
+            // ========== 将离线消息合并到聊天历史 ==========
             function mergeOfflineToHistory(userId) {
                 if (offlineMessages[userId] && offlineMessages[userId].length > 0) {
-                    // 将离线消息添加到聊天历史
                     offlineMessages[userId].forEach(msg => {
                         addMessageToHistory(userId, msg);
                     });
-                    
-                    // 清除离线消息
                     delete offlineMessages[userId];
                     
-                    // 更新UI上的红点
                     const contactItems = document.querySelectorAll('.contact-item');
                     contactItems.forEach(item => {
                         const onclickAttr = item.getAttribute('onclick');
@@ -844,41 +862,34 @@
                             }
                         }
                     });
-                    
-                    return true; // 有离线消息被合并
+                    return true;
                 }
-                return false; // 没有离线消息
+                return false;
             }
             
-            // ========== 添加消息到聊天历史（仅当用户点击联系人或发送消息时调用）==========
+            // ========== 添加消息到聊天历史 ==========
             function addMessageToHistory(userId, messageData) {
                 if (!chatHistory[userId]) {
                     chatHistory[userId] = [];
                 }
-                
-                // 添加到历史记录
                 chatHistory[userId].push(messageData);
-                
-                // 按时间排序
                 chatHistory[userId].sort((a, b) => {
                     return new Date(a.timestamp || 0) - new Date(b.timestamp || 0);
                 });
             }
             
-            // ========== 切换到搜索模式（支持用户和AI） ==========
+            // ========== 切换到搜索模式 ==========
             function switchToSearchMode(type) {
                 const isAiSearch = type === 'ai';
                 const title = isAiSearch ? 'AI机器人搜索' : '用户搜索';
                 const placeholder = isAiSearch ? '按AI机器人名称搜索' : '按用户名进行搜索';
                 const icon = isAiSearch ? 'fa-robot' : 'fa-search';
                 
-                // 1. 修改右上角图标：+ 换成 ←
                 const navIcon = document.querySelector('.fa-plus');
                 navIcon.classList.remove('fa-plus');
                 navIcon.classList.add('fa-arrow-left');
                 navIcon.title = '返回微信';
                 
-                // 移除原来的点击事件，添加返回功能
                 const newNavIcon = navIcon.cloneNode(true);
                 navIcon.parentNode.replaceChild(newNavIcon, navIcon);
                 
@@ -886,11 +897,9 @@
                     switchBackToWeChat();
                 });
                 
-                // 2. 修改聊天头部
                 const chatHeader = document.querySelector('.chat-header');
                 chatHeader.textContent = title;
                 
-                // 3. 修改空白聊天区域
                 emptyChat.innerHTML = `
                     <i class="fas ${icon} chat-icon"></i>
                     <h2>${title}</h2>
@@ -899,56 +908,43 @@
                 emptyChat.style.display = 'flex';
                 chatMessages.style.display = 'none';
                 
-                // 4. 修改输入区域
                 messageInput.placeholder = placeholder;
                 messageInput.disabled = false;
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 
-                // 5. 修改按钮
                 sendBtn.textContent = '查找';
                 sendBtn.disabled = true;
                 
-                // 重要：先移除原来的事件监听器，然后添加新的事件
-                // 创建一个新的按钮元素来完全替换事件监听
                 const oldSendBtn = sendBtn;
                 const newSendBtn = sendBtn.cloneNode(true);
                 sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
-                
-                // 重新获取新的按钮引用
                 sendBtn = document.getElementById('send-btn');
                 
-                // 添加新的点击事件监听器
                 sendBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('查找按钮被点击，搜索模式:', type);
                     performSearch(type);
                 });
                 
-                // 6. 修改左侧边栏的微信图标
                 const wechatIcon = document.querySelector('.fa-comment-alt');
                 if (wechatIcon) {
                     wechatIcon.classList.remove('fa-comment-alt');
                     wechatIcon.classList.add(icon);
                 }
                 
-                // 7. 添加输入监听，启用查找按钮
                 messageInput.addEventListener('input', function() {
                     const searchText = this.value.trim();
                     sendBtn.disabled = searchText.length === 0;
                 });
                 
-                // 8. 修改标题（可选）
                 document.title = `微信 - ${title}`;
-                
                 console.log('已切换到搜索模式:', type);
             }
             
-            // ========== 执行搜索（支持用户和AI） ==========
+            // ========== 执行搜索 ==========
             function performSearch(type) {
                 const searchText = messageInput.value.trim();
-                
                 if (!searchText) {
                     alert('请输入要搜索的内容');
                     return;
@@ -956,12 +952,10 @@
                 
                 console.log(`正在搜索${type === 'ai' ? 'AI机器人' : '用户'}:`, searchText);
                 
-                // 禁用按钮，显示加载状态
                 const originalText = sendBtn.textContent;
                 sendBtn.textContent = '搜索中...';
                 sendBtn.disabled = true;
                 
-                // 根据搜索类型发送不同的请求
                 const endpoint = type === 'ai' ? '/user/aisearch/exist' : '/user/search/exist';
                 
                 fetch(endpoint, {
@@ -985,20 +979,17 @@
                 })
                 .then(data => {
                     console.log('搜索结果:', data);
-                    
-                    // 恢复按钮状态
                     sendBtn.textContent = originalText;
                     sendBtn.disabled = false;
                     
-                    // 处理搜索结果
                     if(!data){
                         throw new Error('服务器返回空数据');
                     } 
                     if (data.status == true) {
                         displaySearchResults([{
                             id: data['targetId'],
-                            name: searchText,  // 使用搜索的名称
-                            type: type  // 标记是用户还是AI
+                            name: searchText,
+                            type: type
                         }], type);
                     } else {
                         alert('搜索失败，未找到对应的' + (type === 'ai' ? 'AI机器人' : '用户'));
@@ -1006,18 +997,15 @@
                 })
                 .catch(error => {
                     console.error('搜索失败:', error);
-                    
-                    // 恢复按钮状态
                     sendBtn.textContent = originalText;
                     sendBtn.disabled = false;
-                    
                     alert('搜索失败，请稍后重试');
                 });
                 
-                return false; // 防止默认行为和事件冒泡
+                return false;
             }
             
-            // ========== 显示搜索结果（支持用户和AI） ==========
+            // ========== 显示搜索结果 ==========
             function displaySearchResults(results, type) {
                 const isAi = type === 'ai';
                 emptyChat.innerHTML = '';
@@ -1036,7 +1024,6 @@
                     return;
                 }
                 
-                // 显示结果列表
                 let resultsHtml = `
                     <div style="text-align: left; width: 100%; max-width: 600px; margin: 0 auto;">
                         <h3 style="margin-bottom: 20px; color: #333;">找到 ${results.length} 个${isAi ? 'AI机器人' : '用户'}</h3>
@@ -1085,7 +1072,7 @@
                 chatMessages.style.display = 'none';
             }
             
-            // ========== 更新联系人列表（支持AI和好友分组） ==========
+            // ========== 更新联系人列表 ==========
             function updateContactList(contacts) {
                 const contactListContainer = document.querySelector('.contact-list');
                 if (!contactListContainer) return;
@@ -1101,33 +1088,22 @@
                     return;
                 }
                 
-                // 分组联系人：好友和AI机器人
                 const friends = contacts.filter(contact => contact.type === 'user');
                 const aiRobots = contacts.filter(contact => contact.type === 'ai');
                 
-                // 创建联系人列表HTML
                 let contactsHtml = '';
                 
-                // 添加好友分组
                 if (friends.length > 0) {
-                    contactsHtml += `
-                        <div class="contact-group-title">好友 (${friends.length})</div>
-                    `;
-                    
-                    friends.forEach((contact, index) => {
-                        // 获取联系人名字的第一个字符作为头像
+                    contactsHtml += `<div class="contact-group-title">好友 (${friends.length})</div>`;
+                    friends.forEach((contact) => {
                         const avatarText = contact.name && contact.name.length > 0 ? contact.name.charAt(0) : '?';
-                        
                         contactsHtml += `
-                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background-color 0.2s;" 
-                                 onclick="selectContact('${contact.id}', '${contact.name}', false)"
-                                 onmouseover="this.style.backgroundColor='#f9f9f9'"
-                                 onmouseout="this.style.backgroundColor='white'">
+                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0;" 
+                                 onclick="selectContact('${contact.id}', '${contact.name}', false)">
                                 <div class="avatar-container">
                                     <div class="avatar">
                                         ${avatarText}
                                     </div>
-                                    <!-- 红点将动态添加到这里 -->
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: bold; font-size: 15px; color: #333;">${contact.name}</div>
@@ -1143,26 +1119,17 @@
                     });
                 }
                 
-                // 添加AI机器人分组
                 if (aiRobots.length > 0) {
-                    contactsHtml += `
-                        <div class="contact-group-title">AI机器人 (${aiRobots.length})</div>
-                    `;
-                    
-                    aiRobots.forEach((contact, index) => {
-                        // 获取联系人名字的第一个字符作为头像
+                    contactsHtml += `<div class="contact-group-title">AI机器人 (${aiRobots.length})</div>`;
+                    aiRobots.forEach((contact) => {
                         const avatarText = contact.name && contact.name.length > 0 ? contact.name.charAt(0) : '?';
-                        
                         contactsHtml += `
-                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background-color 0.2s;" 
-                                 onclick="selectContact('${contact.id}', '${contact.name}', true)"
-                                 onmouseover="this.style.backgroundColor='#f9f9f9'"
-                                 onmouseout="this.style.backgroundColor='white'">
+                            <div class="contact-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0;" 
+                                 onclick="selectContact('${contact.id}', '${contact.name}', true)">
                                 <div class="avatar-container">
                                     <div class="avatar ai-avatar">
                                         ${avatarText}
                                     </div>
-                                    <!-- 红点将动态添加到这里 -->
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: bold; font-size: 15px; color: #333;">${contact.name}</div>
@@ -1179,62 +1146,49 @@
                     });
                 }
                 
-                // 更新联系人列表容器
                 contactListContainer.innerHTML = `
                     <div style="overflow-y: auto; height: 100%;">
                         ${contactsHtml}
                     </div>
                 `;
-                
-                // 显示未读消息红点
-                // showUnreadBadges();
             }
             
-            // ========== 选择联系人（增强版，支持AI） ==========
+            // ========== 选择联系人 ==========
             window.selectContact = function(userId, userName, isAI = false) {
                 console.log(`选择了${isAI ? 'AI机器人' : '联系人'}: ${userName} (ID: ${userId})`);
                 
-                // 如果在搜索模式，先切换回微信模式
                 if (document.title.includes('搜索')) {
                     switchBackToWeChat();
                 }
                 
-                // 更新当前联系人
+                // 移除该联系人的红点
+                removeUnreadBadge(userId);
+                
                 currentContact = { id: userId, name: userName, type: isAI ? 'ai' : 'user' };
                 
-                // 更新聊天头部
                 const chatHeader = document.querySelector('.chat-header');
                 chatHeader.textContent = userName + (isAI ? ' [AI]' : '');
                 
-                // 清空输入框
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
-                
-                // 启用输入区域
                 messageInput.placeholder = `发送消息给 ${userName}${isAI ? ' (AI)' : ''}...`;
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
                 
-                // 将离线消息合并到聊天历史（如果有）
                 const hasOfflineMessages = mergeOfflineToHistory(userId);
-                
-                // 加载聊天记录
                 loadChatHistory(userId, isAI, userName, hasOfflineMessages);
             };
             
-            // ========== 加载聊天记录（仅在点击联系人时调用）==========
+            // ========== 加载聊天记录 ==========
             function loadChatHistory(contactId, isAI, contactName, hasNewOfflineMessages = false) {
-                // 确定请求的端点
                 const endpoint = isAI ? '/user/offlineaimessage' : '/user/offlinemessage';
                 
                 console.log(`正在加载${isAI ? 'AI' : '好友'}聊天记录，联系人ID: ${contactId}`);
                 
-                // 显示加载状态
                 chatMessages.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">正在加载聊天记录...</div>';
                 emptyChat.style.display = 'none';
                 chatMessages.style.display = 'flex';
                 
-                // 发送请求获取聊天记录
                 fetch(endpoint, {
                     method: 'POST',
                     headers: { 
@@ -1254,72 +1208,57 @@
                 .then(data => {
                     console.log(`收到${isAI ? 'AI' : '好友'}聊天记录:`, data);
                     
-                    // 清空聊天消息区域
                     chatMessages.innerHTML = '';
                     
                     if (data && data.status === true && data.message) {
-                        // 处理聊天记录数据
                         const chatData = data.message;
                         
-                        // 初始化该联系人的聊天历史记录（如果还没有的话）
                         if (!chatHistory[contactId]) {
                             chatHistory[contactId] = [];
                         }
                         
-                        // 清空当前联系人的历史记录（重新加载）
                         chatHistory[contactId] = [];
                         
-                        // 处理聊天消息
                         let hasOfflineMessagesShown = false;
                         let lastDate = null;
                         
                         chatData.forEach((msg, index) => {
-                            // 检查是否是离线消息
                             const isNewOffline = hasNewOfflineMessages && index >= chatData.length - (offlineMessages[contactId]?.length || 0);
                             
-                            // 如果是新离线消息，并且还没有添加分隔线，则添加
                             if (isNewOffline && hasNewOfflineMessages && !hasOfflineMessagesShown) {
                                 addOfflineDivider();
                                 hasOfflineMessagesShown = true;
                             }
                             
-                            // 添加时间分隔线（每天一个）
                             const msgDate = msg.timestamp ? msg.timestamp.split(' ')[0] : null;
                             if (msgDate && msgDate !== lastDate) {
                                 addTimeDivider(msgDate);
                                 lastDate = msgDate;
                             }
                             
-                            // 根据联系人类型和source判断消息方向
                             let isFromOther = false;
                             
                             if (isAI) {
-                                // AI聊天记录：source为"user"是用户消息（显示在右侧），source为"robot"是AI消息（显示在左侧）
                                 isFromOther = msg.source === 'robot';
                             } else {
-                                // 好友聊天记录：source为"user"是用户消息（显示在右侧），source为"friend"是好友消息（显示在左侧）
                                 isFromOther = msg.source === 'friend';
                             }
                             
-                            // 添加到聊天历史
                             chatHistory[contactId].push({
                                 message: msg.message,
                                 timestamp: msg.timestamp,
-                                source: msg.source, // 'user' 或 'friend'（好友）/ 'robot'（AI）
+                                source: msg.source,
                                 senderId: isFromOther ? contactId : currentUserId,
                                 isFromOther: isFromOther,
                                 isAI: isAI
                             });
                             
-                            // 添加到聊天界面
                             addMessageToChat(msg.message, msg.timestamp, isFromOther, false, isAI, isFromOther ? contactId : currentUserId);
                         });
                         
-                        // 滚动到底部
                         scrollToBottom();
                         
                     } else {
-                        // 没有聊天记录
                         chatMessages.innerHTML = `
                             <div style="text-align: center; color: #999; padding: 40px 0;">
                                 <i class="fas ${isAI ? 'fa-robot' : 'fa-comments'}" style="font-size: 40px; margin-bottom: 15px;"></i>
@@ -1331,7 +1270,6 @@
                 })
                 .catch(error => {
                     console.error(`加载${isAI ? 'AI' : '好友'}聊天记录失败:`, error);
-                    
                     chatMessages.innerHTML = `
                         <div style="text-align: center; color: #999; padding: 40px 0;">
                             <i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px; color: #f44336;"></i>
@@ -1351,8 +1289,6 @@
                 messageDiv.className = isFromOther ? 'message-other' : 'message-self';
                 
                 const timeStr = timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                // 创建AI消息的指示器（仅当是AI发送的消息时显示）
                 const aiIndicator = isAI && isFromOther ? '<span class="ai-message-indicator">AI</span>' : '';
                 
                 messageDiv.innerHTML = `
@@ -1370,7 +1306,6 @@
             
             // ========== 显示AI正在输入的动画 ==========
             function showAIThinking() {
-                // 如果已经在显示，则不重复添加
                 if (document.querySelector('.typing-indicator')) {
                     return;
                 }
@@ -1419,7 +1354,6 @@
             // ========== 格式化日期 ==========
             function formatDate(dateStr) {
                 if (!dateStr) return '';
-                
                 const date = new Date(dateStr);
                 const today = new Date();
                 const yesterday = new Date(today);
@@ -1469,7 +1403,6 @@
                 .then(data => {
                     if (data.status == true) {
                         alert("添加好友成功");
-                        // 重新加载所有联系人
                         loadAllContacts();
                     } else {
                         alert(data.message || '添加好友失败');
@@ -1509,7 +1442,6 @@
                 .then(data => {
                     if (data.status == true) {
                         alert("添加AI机器人成功");
-                        // 重新加载所有联系人
                         loadAllContacts();
                     } else {
                         alert(data.message || '添加AI机器人失败');
@@ -1527,7 +1459,6 @@
                 messageInput.focus();
                 sendBtn.disabled = true;
                 
-                // 恢复搜索界面
                 const isAi = searchMode === 'ai';
                 emptyChat.innerHTML = `
                     <i class="fas ${isAi ? 'fa-robot' : 'fa-search'} chat-icon"></i>
@@ -1539,19 +1470,16 @@
             };
             
             // ========== 切换回微信模式 ==========
-            function switchBackToWeChat() {
-                // 1. 恢复右上角图标
+            window.switchBackToWeChat = function() {
                 const navIcon = document.querySelector('.fa-arrow-left');
                 if (navIcon) {
                     navIcon.classList.remove('fa-arrow-left');
                     navIcon.classList.add('fa-plus');
                     navIcon.title = '添加';
                     
-                    // 移除返回事件，重新绑定点击事件（通过下拉菜单控制）
                     const newNavIcon = navIcon.cloneNode(true);
                     navIcon.parentNode.replaceChild(newNavIcon, navIcon);
                     
-                    // 重新绑定下拉菜单事件
                     const newAddButton = document.getElementById('add-button');
                     if (newAddButton) {
                         newAddButton.addEventListener('click', function(e) {
@@ -1561,11 +1489,9 @@
                     }
                 }
                 
-                // 2. 恢复聊天头部
                 const chatHeader = document.querySelector('.chat-header');
                 chatHeader.textContent = '选择一个聊天开始对话';
                 
-                // 3. 恢复空白聊天区域
                 emptyChat.innerHTML = `
                     <i class="fas fa-comments chat-icon"></i>
                     <h2>开始聊天</h2>
@@ -1574,47 +1500,36 @@
                 emptyChat.style.display = 'flex';
                 chatMessages.style.display = 'none';
                 
-                // 4. 恢复输入区域
                 messageInput.placeholder = '选择一个联系人开始聊天...';
                 messageInput.disabled = true;
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 
-                // 5. 恢复按钮
                 sendBtn.textContent = '发送';
                 sendBtn.disabled = true;
                 
-                // 重要：重置按钮的事件监听器
                 const oldSendBtn = sendBtn;
                 const newSendBtn = sendBtn.cloneNode(true);
                 sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
-                
-                // 重新获取新的按钮引用
                 sendBtn = document.getElementById('send-btn');
                 
-                // 重新绑定发送消息的事件
                 sendBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('发送按钮被点击');
                     originalSendBtnClick();
                 });
                 
-                // 6. 恢复微信图标
                 const searchIcon = document.querySelector('.fa-search, .fa-robot');
                 if (searchIcon && searchIcon.closest('.navbar')) {
                     searchIcon.classList.remove('fa-search', 'fa-robot');
                     searchIcon.classList.add('fa-comment-alt');
                 }
                 
-                // 7. 恢复标题
                 document.title = '微信';
-                
-                // 8. 重置搜索模式
                 searchMode = '';
                 
                 console.log('已切换回微信模式');
-            }
+            };
             
             // ========== 自动调整输入框高度 ==========
             messageInput.addEventListener('input', function() {
@@ -1628,8 +1543,6 @@
                 tab.addEventListener('click', function() {
                     tabItems.forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    // 模拟页面切换
                     const tabLabel = this.querySelector('.tab-label').textContent;
                     alert(`切换到 ${tabLabel} 页面`);
                 });
@@ -1650,43 +1563,32 @@
                     console.log('要发送的消息:', message);
                     
                     if (message) {
-                        // 获取当前选中的联系人
                         const contact = currentContact;
                         const isAI = contact.type === 'ai';
                         
-                        // 1. 先在本地显示消息（即时反馈）
                         const messageData = {
                             message: message,
                             timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                            source: 'user',  // 'user'表示当前用户发送的消息（显示在右侧）
+                            source: 'user',
                             senderId: currentUserId || 'self',
                             isFromOther: false,
                             isAI: isAI
                         };
                         
-                        // 添加到聊天历史
                         addMessageToHistory(contact.id, messageData);
-                        
-                        // 更新UI
                         addMessageToChat(message, messageData.timestamp, false, false, isAI, currentUserId);
                         
-                        // 清空输入框
                         messageInput.value = '';
                         messageInput.style.height = 'auto';
-                        
-                        // 滚动到底部
                         scrollToBottom();
                         
-                        // 2. 根据联系人类型发送到不同的服务器端点
                         const endpoint = isAI ? '/user/airobot/send' : '/user/friend/send';
                         
-                        // 如果是AI，显示正在输入动画
                         if (isAI) {
                             showAIThinking();
                             isWaitingForAIResponse = true;
                         }
                         
-                        // 禁用发送按钮，防止重复发送
                         sendBtn.disabled = true;
                         
                         fetch(endpoint, {
@@ -1713,20 +1615,15 @@
                         })
                         .then(data => {
                             console.log('发送消息响应:', data);
-                            
-                            // 恢复发送按钮
                             sendBtn.disabled = false;
                             
                             if (data && data.status == true) {
                                 console.log('消息发送成功');
                                 
-                                // 处理AI回复
                                 if (isAI) {
-                                    // 隐藏正在输入动画
                                     hideAIThinking();
                                     isWaitingForAIResponse = false;
                                     
-                                    // 确保AI回复不为空
                                     let aiResponse = '';
                                     if (data.answer) {
                                         aiResponse = data.answer;
@@ -1738,34 +1635,33 @@
                                         aiResponse = '抱歉，我暂时无法回答这个问题。';
                                     }
                                     
-                                    // 创建AI回复消息数据
                                     const aiMessageData = {
                                         message: aiResponse,
                                         timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                                        source: 'robot',  // 'robot'表示AI发送的消息（显示在左侧）
+                                        source: 'robot',
                                         senderId: contact.id,
                                         isFromOther: true,
                                         isAI: true
                                     };
                                     
-                                    // 添加到聊天历史
                                     addMessageToHistory(contact.id, aiMessageData);
                                     
-                                    // 更新UI
-                                    addMessageToChat(aiResponse, aiMessageData.timestamp, true, false, true, contact.id);
-                                    
-                                    // 滚动到底部
-                                    scrollToBottom();
+                                    // 关键修改：检查当前聊天窗口是否是发送消息的AI
+                                    if (currentContact && currentContact.id === contact.id) {
+                                        addMessageToChat(aiResponse, aiMessageData.timestamp, true, false, true, contact.id);
+                                        scrollToBottom();
+                                    } else {
+                                        addUnreadBadge(contact.id);
+                                        console.log(`AI回复已保存到 ${contact.name} 的聊天记录，当前不在聊天窗口，添加红点提示`);
+                                    }
                                 }
                             } else {
                                 console.warn('消息发送可能失败:', data?.message);
                                 
-                                // 如果是AI，也隐藏正在输入动画
                                 if (isAI) {
                                     hideAIThinking();
                                     isWaitingForAIResponse = false;
                                     
-                                    // 显示错误消息
                                     const errorMessageData = {
                                         message: '抱歉，AI暂时无法响应。请稍后再试。',
                                         timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
@@ -1777,23 +1673,24 @@
                                     };
                                     
                                     addMessageToHistory(contact.id, errorMessageData);
-                                    addMessageToChat(errorMessageData.message, errorMessageData.timestamp, true, false, true, contact.id);
-                                    scrollToBottom();
+                                    
+                                    if (currentContact && currentContact.id === contact.id) {
+                                        addMessageToChat(errorMessageData.message, errorMessageData.timestamp, true, false, true, contact.id);
+                                        scrollToBottom();
+                                    } else {
+                                        addUnreadBadge(contact.id);
+                                    }
                                 }
                             }
                         })
                         .catch(error => {
                             console.error('发送消息失败:', error);
-                            
-                            // 恢复发送按钮
                             sendBtn.disabled = false;
                             
-                            // 如果是AI，隐藏正在输入动画
                             if (isAI) {
                                 hideAIThinking();
                                 isWaitingForAIResponse = false;
                                 
-                                // 显示错误消息
                                 const errorMessageData = {
                                     message: '网络错误，请检查连接后重试。',
                                     timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
@@ -1805,8 +1702,13 @@
                                 };
                                 
                                 addMessageToHistory(contact.id, errorMessageData);
-                                addMessageToChat(errorMessageData.message, errorMessageData.timestamp, true, false, true, contact.id);
-                                scrollToBottom();
+                                
+                                if (currentContact && currentContact.id === contact.id) {
+                                    addMessageToChat(errorMessageData.message, errorMessageData.timestamp, true, false, true, contact.id);
+                                    scrollToBottom();
+                                } else {
+                                    addUnreadBadge(contact.id);
+                                }
                             }
                         });
                         
@@ -1815,39 +1717,30 @@
                     }
                 } else {
                     alert('请先选择一个联系人开始聊天');
-                    console.log('发送失败原因: sendBtn.disabled=', sendBtn.disabled, 'currentContact=', currentContact);
                 }
             };
 
-            // ========== 绑定发送按钮点击事件 ==========
             sendBtn.addEventListener('click', function() {
                 console.log('发送按钮被点击');
                 originalSendBtnClick();
             });
 
-            // ========== 按Enter键发送消息 ==========
             messageInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    console.log('Enter键被按下');
                     originalSendBtnClick();
                 }
             });
 
-            // ========== 辅助函数：更新推荐用户 ==========
             function updateSuggestedUsers(users) {
-                // 这里可以显示推荐用户
                 console.log('推荐用户:', users);
             }
             
-            // ========== 辅助函数：更新推荐AI ==========
             function updateSuggestedAIs(ais) {
-                // 这里可以显示推荐AI机器人
                 console.log('推荐AI机器人:', ais);
             }
 
-            console.log('微信界面已加载');
-            console.log('修改：只在点击联系人时加载聊天记录，不再自动初始化所有联系人的聊天历史');
+            console.log('微信界面已加载 - 已修复AI回复红点问题');
         });
     </script>
 </body>

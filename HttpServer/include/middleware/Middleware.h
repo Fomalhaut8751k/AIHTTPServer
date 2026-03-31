@@ -9,7 +9,7 @@ namespace http
 
 namespace middleware
 {
-
+// 像一个链表，好像没有值域，只有指针域(nextMiddleware_)
 class Middleware
 {
 public:

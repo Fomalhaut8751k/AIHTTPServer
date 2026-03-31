@@ -611,3 +611,58 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
         return false;
     }
     ```
+
+<br>
+
+30. 2026.1.10
+
+    在`AI`的离线消息查询中，使用了这样的语句：
+    ```cpp
+    std::string sql = R"(
+        SELECT o.*, r.apikey, r.strategyType
+        FROM offlineAIRobotMessage o 
+        JOIN AIRobot r ON o.robotid = r.robotid 
+        WHERE o.userid = ? AND o.robotid = ? ORDER BY created_at ASC
+    )";
+    ```
+    但是`created_at`并没有创建索引，因此会涉及到外排序`Using fileorder`(磁盘I/O)，当数据量过大时就会严重拖累性能。
+
+<br>
+
+31. 2026.3.31
+
+    在客户端尝试登录多个用户，发现无论是在同一个浏览器还是多个(指多个firefox)，登录多个后刷新一下页面，都会变成最新登录的那一个。如果是不同的浏览器(比如一个firefox和一个google chrome)就可以。
+
+    而后又发现以下的问题，如果两个用户前后脚发送问题，会先处理先发送的用户的问题，问题处理完(到显示在聊天框中)后才处理第二个问题，说明这个过程是阻塞的。并且，如果一个用户的问题在处理中，其他用户的操作，比如初次进入某个机器人的聊天页面要加载聊天记录，那么会显示加载中，等待那个用户的问题处理完后才能显示出来，也说明了用户提交问题是一个阻塞的操作，甚至同一个用户，它提问后去点击其他好友或者机器人想查看聊天内容，也是显示加载中，必须等待问题处理完后才能显示，因此这一步是需要实现为异步的。
+
+    ```cpp
+    // 在muduo网络库中
+    pollReturnTime_ = poller_->poll(kPollTimeMs, &activateChannels_);
+    for(Channel* channel: activateChannels_){
+        channel->handleEvent(pollReturnTime_);  // 某个任务长期阻塞在这里
+        // 等他处理完后，下次poll才会去处理其他的任务，比如加载历史聊天
+    }
+    ```
+
+    ![](images/async1.png)
+
+    我们可以用过请求体来判断此次请求是否用户向AI提问，如果是，我们可以把从后续的逻辑(到发送响应)全部写在一个独立的线程当中。
+
+    ```json
+    {"action":"send_ai_message","targetId":"4","targetName":"doubao","message":"你好","timestamp":1774940336060}
+    ```
+    
+    ```cpp
+    std::string requestBody = context->request().getBody();
+    if(!requestBody.empty() && json::parse(requestBody)["action"] == "send_ai_message"){
+        HttpRequest request = context->request();
+        std::thread t([this, conn, request]() {
+            onRequest(conn, request);
+        });
+        t.detach();
+    }
+    else{
+        onRequest(conn, context->request());
+    }
+    context->reset();
+    ```

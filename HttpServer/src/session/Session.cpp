@@ -18,8 +18,8 @@ Session::Session(const std::string& sessionId,
 
 bool Session::isExpired() const
 {
-    std::chrono::duration<double> diff = std::chrono::system_clock::now() - expiryTime_;
-    double a = diff.count();
+    // std::chrono::duration<double> diff = std::chrono::system_clock::now() - expiryTime_;
+    // double a = diff.count();
     return std::chrono::system_clock::now() > expiryTime_;
 }
 

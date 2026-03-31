@@ -166,7 +166,7 @@ json AIHelper::executeCurl(const json& payload)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-    CURLcode res = curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(curl);   // 阻塞操作
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 

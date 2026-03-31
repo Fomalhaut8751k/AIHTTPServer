@@ -3,6 +3,7 @@
 #include <any>
 #include <functional>
 #include <memory>
+#include <thread>
 
 namespace http
 {
@@ -56,7 +57,8 @@ void HttpServer::setSslConfig(const ssl::SslConfig& config)
         if(!sslCtx_->initialize())
         {
             logger_->ERROR("Failed to initialize SSL context");
-            abort();
+            useSSL_ = false;
+            // abort();
         }
     }
 }
@@ -123,13 +125,40 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, TimeStamp 
         if(!context->parseRequest(buf, receiveTime))  // 解析一个http请求
         {
             // 如果解析HTTP报文中出错
-            conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+            if(useSSL_)
+            {
+                auto it = sslConns_.find(conn);
+                if(it != sslConns_.end())
+                {
+                    std::string response = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                    it->second->send(response.c_str(), response.length());
+                }
+                else
+                {
+                    conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+                }
+            }
+            else
+            {
+                conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+            }
             conn->shutdown();
         }
         // 如果buf缓冲区中解析出一个完成的数据包才封装响应报文
         if(context->gotAll())
         {
-            onRequest(conn, context->request());
+            // context->request().showAll();
+            std::string requestBody = context->request().getBody();
+            if(!requestBody.empty() && json::parse(requestBody)["action"] == "send_ai_message"){
+                HttpRequest request = context->request();
+                std::thread t([this, conn, request]() {
+                    onRequest(conn, request);
+                });
+                t.detach();
+            }
+            else{
+                onRequest(conn, context->request());
+            }
             context->reset();
         }
     }
@@ -147,6 +176,7 @@ void HttpServer::onRequest(const TcpConnectionPtr& conn, const HttpRequest& req)
 {
     const std::string& connection = req.getHeader("Connection");
     bool close = ((connection == "close") || (req.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
+    // std::cout << req.getVersion() << " " << close << std::endl;
     HttpResponse response(close);
 
     // 根据请求报文信息来封装响应报文对象
@@ -160,6 +190,7 @@ void HttpServer::onRequest(const TcpConnectionPtr& conn, const HttpRequest& req)
     
     conn->send(&buf);
     // 如果是短连接的话，返回响应报文后就断开连接
+    response.setCloseConnection(close);
     if(response.closeConnection())
     {
         conn->shutdown();

@@ -35,7 +35,7 @@ std::string ChatServer::registerInvitationCode = "D90AS809SJ0EW092JK23SD";
 
 ChatServer::ChatServer(int port, const std::string& name, 
                     TcpServer::Option option):
-    httpServer_(port, name, option)
+    httpServer_(port, name, true, option)
 {
     initialize();
 }
@@ -60,6 +60,8 @@ void ChatServer::initialize()
     initializeMiddleWare();
     // 初始化路由
     initializeRouter();
+    // 初始化SSL服务
+    initializeSSLTLS();
 }
 
 void ChatServer::initializeSession()
@@ -133,6 +135,10 @@ void ChatServer::initializeMiddleWare()
     auto corsMiddleware = std::make_shared<http::middleware::CorsMiddleware>();
     // 添加中间件
     httpServer_.addMiddleware(corsMiddleware);
+}
+
+void ChatServer::initializeSSLTLS(){
+    httpServer_.setSslConfig(ssl::SslConfig());
 }
 
 void ChatServer::setSessionManager(std::unique_ptr<http::session::SessionManager> manager)

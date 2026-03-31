@@ -25,6 +25,7 @@
 #include "../middleware/cors/CorsMiddleware.h"
 #include "../ssl/SslConnection.h"
 #include "../ssl/SslContext.h"
+#include "../ssl/SslConfig.h"
 
 class HttpRequest;
 class HttpResponse;
