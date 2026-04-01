@@ -31,6 +31,7 @@ void OfflineAIMessageShowHandler::handle(const http::HttpRequest& req, http::Htt
         json successResp;
         successResp["message"] = json::array();
         successResp["status"] = getOfflineMessage(userId, robotId, successResp);
+        
 
         std::string successBody = successResp.dump(4);
 
@@ -58,8 +59,110 @@ void OfflineAIMessageShowHandler::handle(const http::HttpRequest& req, http::Htt
     }
 }
 
+// bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int& robotId, json& js)
+// {
+//     /* AIHelper有两种情况：
+//         1. 用户与该AI还没有任何聊天记录时，AIHelper始终为空
+//         2. 用户与该AI有聊天记录，则第一次加载时为空，之后的加载不为空
+//     */
+//     if(server_->chatInformation[userId].find(robotId) != server_->chatInformation[userId].end()){
+//         // 如果存在，就直接通过AIHelper中的Message构建聊天记录，而不是通过数据库
+//         std::cerr << "aihelper exist" << std::endl;
+//         std::shared_ptr<AIHelper> helper = server_->chatInformation[userId][robotId];
+//         int idx = 0;
+//         for(std::pair<std::string, std::string> item: helper->GetMessage()){   // 消息和时间戳
+//             js["message"].push_back(
+//                 {
+//                     {"source", idx % 2 ? "robot": "user"},
+//                     {"message", item.first},
+//                     {"timestamp", item.second}
+//                 }
+//             );
+//             idx++;
+//         }
+//         for(auto item: server_->chatInformation[userId][robotId]->GetMessage()){
+//             cout << item.first << ": " << item.second << endl;
+//         }
+//         return true;
+//     }
+//     else{
+//         std::cerr << "aihelper no exist" << std::endl;
+//     }
+//     // AIHelper的创建还需要对应的apiKey以及策略类型，先获取
+//     std::shared_ptr<AIHelper> helper;
+//     std::string sql_pre = R"(
+//         SELECT apikey, strategyType FROM AIRobot WHERE robotid = ?
+//     )";
+//     sql::ResultSet* res_pre = mysqlUtil_.executeQuery(sql_pre, robotId);
+//     if(res_pre->next()){
+//         std::string apikey = res_pre->getString("apikey");
+//         int strategyType = res_pre->getInt("strategyType");
+//         helper = std::make_shared<AIHelper>(strategyType, apikey);
+//         server_->chatInformation[userId][robotId] = helper;
+//     }
+
+//     // 查询聊天记录
+//     std::string sql = R"(
+//         SELECT source, message, created_at FROM offlineAIRobotMessage WHERE userid = ? AND robotid = ? ORDER BY created_at ASC
+//     )";
+//     sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, robotId);
+
+//     if(!res){
+//         logger_->WARN("Query failed or no results");
+//         return false;
+//     }
+
+//     while(res->next()){
+//         std::string message = res->getString("message");
+//         std::string source = res->getString("source");
+//         std::string timestamp = res->getString("created_at");
+
+//         /* 此会话非彼会话，指的就是用户和AI的聊天
+
+//             1. std::unordered_map<int, std::unordered_map<int, std::shared_ptr<AIHelper>>> chatInformation;
+//             2. 因为是unordered_map，因此chatInformation[userId]不存在，也会创建一个空的
+//         */
+
+//         // 存储到服务器的内存当中
+//         helper->restoreMessage(message, timestamp);
+
+//         js["message"].push_back(
+//             {
+//                 {"source", source},
+//                 {"message", message},
+//                 {"timestamp", timestamp}
+//             }
+//         );
+//     }
+//     return true;
+// }
+
 bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int& robotId, json& js)
 {
+    /* AIHelper有两种情况：
+        1. 用户与该AI还没有任何聊天记录时，AIHelper始终为空
+        2. 用户与该AI有聊天记录，则第一次加载时为空，之后的加载不为空
+    */
+    if(server_->chatInformation[userId].find(robotId) != server_->chatInformation[userId].end()){
+        // 如果存在，就直接通过AIHelper中的Message构建聊天记录，而不是通过数据库
+        
+        std::shared_ptr<AIHelper> helper = server_->chatInformation[userId][robotId];
+        int idx = 0;
+        for(std::pair<std::string, std::string> item: helper->GetMessage()){   // 消息和时间戳
+            js["message"].push_back(
+                {
+                    {"source", idx % 2 ? "robot": "user"},
+                    {"message", item.first},
+                    {"timestamp", item.second}
+                }
+            );
+            idx++;
+        }
+        
+    }else{
+        std::cerr << "aihelper no exist" << std::endl;
+    }
+
     // AIHelper的创建还需要对应的apiKey
     std::string sql = R"(
         SELECT o.*, r.apikey, r.strategyType
@@ -68,6 +171,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
         WHERE o.userid = ? AND o.robotid = ? ORDER BY created_at ASC
     )";
     sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, robotId);
+
     if(!res){
         logger_->WARN("Query failed or no results");
         return false;
@@ -89,6 +193,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
             1. std::unordered_map<int, std::unordered_map<int, std::shared_ptr<AIHelper>>> chatInformation;
             2. 因为是unordered_map，因此chatInformation[userId]不存在，也会创建一个空的
         */
+
         auto& userSessionsMap = server_->chatInformation[userId]; // user会话map，和若干个AI的会话
         std::shared_ptr<AIHelper> helper;
         auto itSession = userSessionsMap.find(robotId);  // user和某个robot的会话
@@ -122,6 +227,7 @@ bool OfflineAIMessageShowHandler::getOfflineMessage(const int& userId, const int
             }
         );
     }
+    // std::cerr << js["message"] << std::endl;
     return true;
 }
 

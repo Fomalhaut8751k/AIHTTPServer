@@ -112,7 +112,7 @@ std::pair<std::string, int64_t> AIHelper::chat(int userId)
 
     json response = executeCurl(payload); // 执行请求
 
-    std::cerr << response << std::endl;
+    // std::cerr << response << std::endl;
 
     return strategy->processResponse(response); // 处理输出
 

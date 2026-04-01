@@ -666,3 +666,29 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     }
     context->reset();
     ```
+
+<br>
+
+32. 2026.4.1
+
+    客户端每次点击对应的机器人头像，加载聊天记录时，都是通过服务器向数据库发出请求，但实际上，对应的AIHelper上已经在记录了所有的聊天信息，因此除了第一次加载的时候需要请求数据库以外，其他的都可以使用AIHelper中的数据。
+
+    有一点特殊的时，服务器时通过加载聊天记录来创建AIHelper的，第一次加载时没有就会创建，我们就可以根据这一点来判断是否加载过，如果第一次加载的时候发现没有任何聊天记录，那么也是不会创建的。这时你频繁的点击从未聊天过的某个机器人，在不考虑浏览器缓存的情况下，依然是每次都请求数据库。
+
+    ```cpp
+    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, userId, robotId);
+    while(res->next()){
+        // 如果AIHelper不存在，就创建
+        // 但是如果本来就一条消息没有，那么就根本不会走这个循环。
+    }
+    ```
+
+    这里我们判断AIHelper不存在时，就先查询`AIRobot`这个表，来获取对应的`apikey`和`strategyType`用于创建AIHelper，之后再查询`offlineAIRobotMessage`，此次查询不再需要连接`AIRobot`这张表。
+    ```sql
+    SELECT o.*, r.apikey, r.strategyType FROM offlineAIRobotMessage o JOIN AIRobot r ON o.robotid = r.robotid WHERE o.userid = ? AND o.robotid = ? ORDER BY created_at ASC
+    ```
+    ```sql
+    SELECT source, created_at FROM offlineAIRobotMessage WHERE userid = ? AND robotid = ? ORDER BY created_at ASC
+    ```
+
+    目前有点小问题
