@@ -691,4 +691,18 @@ httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));  // 退
     SELECT source, created_at FROM offlineAIRobotMessage WHERE userid = ? AND robotid = ? ORDER BY created_at ASC
     ```
 
-    目前有点小问题
+33. 2026.5.8
+
+    偶尔会出现的问题:
+
+    ```cpp
+    0x00005555555ae976 in http::HttpContext::parseRequest (this=0x0, buf=0x5555559e4a58, receiveTime=...) at /home/shijilong/桌面/projects/AIHTTPServer/AIHTTPServer/HttpServer/src/http/HttpContext.cpp:23
+    23              if(state_ == kExpectRequestLine)
+    ```
+
+    `HttpContext`的`this`指针是空指针，而`state_`是它的成员变量，因此无法访问到。成员函数是属于类而不是对象的，因此一开始执行`HttpContext::parseRequest()`是没有问题的，直到访问成员变量`state_`时才出错。那么为什么`this`指针会是空呢。
+
+
+34. 2026.5.13
+
+    添加了新的聊天模型(claude-opus-4.6和gpt-5.5)

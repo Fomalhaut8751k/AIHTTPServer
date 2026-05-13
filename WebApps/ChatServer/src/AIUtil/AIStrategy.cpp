@@ -219,9 +219,107 @@ std::pair<std::string, int64_t> AliyunMcpStrategy::processResponse(const json& r
     因此下面四行语句就包含了注册过程。
 */
 
+// =====================================================================================================
+// ========================================= ClaudeOpusStrategy ========================================
+// =====================================================================================================
+
+ClaudeOpusStrategy::ClaudeOpusStrategy()
+{
+    apiKey_ = "";
+    isMCPModel = false;
+}
+
+std::string ClaudeOpusStrategy::getApiUrl() const
+{
+    return "https://api.penguinsaichat.dpdns.org/v1/chat/completions";
+}
+
+std::string ClaudeOpusStrategy::getApiKey() const
+{
+    return apiKey_;
+}
+
+std::string ClaudeOpusStrategy::getModel() const
+{
+    return "claude-opus-4.6";
+}
+
+void ClaudeOpusStrategy::processRequest(json& payload, json& msgArray)
+{
+    payload["messages"] = msgArray;
+}
+
+std::pair<std::string, int64_t> ClaudeOpusStrategy::processResponse(const json& response)
+{
+    std::cerr << "响应内容: " << std::endl;
+    std::cerr << response.dump(4) << std::endl;
+
+    if(response.contains("choices") && !response["choices"].empty())
+    {
+        std::string answer = response["choices"][0]["message"]["content"];
+        int64_t timestamp = response.value("created", std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
+        return {answer, timestamp};
+    }
+
+    if(response.contains("error"))
+    {
+        const auto& error = response["error"];
+        if(error.contains("message"))
+        {
+            return {"[Error] " + error["message"].get<std::string>(), -1};
+        }
+    }
+
+    return {"[Error] 无法解析响应", -1};
+}
+
+// =====================================================================================================
+// ========================================== GptStrategy ==============================================
+// =====================================================================================================
+
+GptStrategy::GptStrategy()
+{
+    apiKey_ = "";
+    isMCPModel = false;
+}
+
+std::string GptStrategy::getApiUrl() const
+{
+    return "https://api.penguinsaichat.dpdns.org/v1/chat/completions";
+}
+
+std::string GptStrategy::getApiKey() const
+{
+    return apiKey_;
+}
+
+std::string GptStrategy::getModel() const
+{
+    return "gpt-5.5";
+}
+
+void GptStrategy::processRequest(json& payload, json& msgArray)
+{
+    payload["messages"] = msgArray;
+}
+
+std::pair<std::string, int64_t> GptStrategy::processResponse(const json& response)
+{
+    if(response.contains("choices") && !response["choices"].empty())
+    {
+        std::string answer = response["choices"][0]["message"]["content"];
+        int64_t timestamp = response["created"];
+        return {answer, timestamp};
+    }
+
+    return {"[Error] 无法解析响应", -1};
+}
+
 // 经过调试，这四行代码确实能在程序刚运行时就调用
 static StrategyRegister<AliyunStrategy> regAliyun("1");
 static StrategyRegister<DouBaoStrategy> reDoubao("2");
 static StrategyRegister<AliyunRAGStrategy> regAliyunRag("3");
 static StrategyRegister<AliyunMcpStrategy> regAliyunMcp("4");
-
+static StrategyRegister<ClaudeOpusStrategy> regClaudeOpus("5");
+static StrategyRegister<GptStrategy> regGpt("6");

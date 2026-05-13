@@ -125,4 +125,42 @@ private:
     std::string apiKey_;
 };
 
+class ClaudeOpusStrategy: public AIStrategy
+{
+public:
+    ClaudeOpusStrategy();
+
+    void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "5"; }
+
+    void processRequest(json& payload, json& msgArray) override;
+    std::pair<std::string, int64_t> processResponse(const json& response) override;
+
+    std::string getApiUrl() const override;
+    std::string getApiKey() const override;
+    std::string getModel() const override;
+
+private:
+    std::string apiKey_;
+};
+
+class GptStrategy: public AIStrategy
+{
+public:
+    GptStrategy();
+
+    void setApiKey(const std::string api_key) override { apiKey_ = api_key; }
+    std::string getStrategyType() const override { return "6"; }
+
+    void processRequest(json& payload, json& msgArray) override;
+    std::pair<std::string, int64_t> processResponse(const json& response) override;
+
+    std::string getApiUrl() const override;
+    std::string getApiKey() const override;
+    std::string getModel() const override;
+
+private:
+    std::string apiKey_;
+};
+
 #endif
